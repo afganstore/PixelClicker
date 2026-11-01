@@ -437,7 +437,7 @@ input:checked + .slider:before {
     border: 1px solid var(--text-secondary);
     border-radius: 12px;
     padding: 1rem;
-    font-family: "Courier New", monospace;
+    font-family: inherit;
     font-size: 0.9rem;
     color: var(--text-primary);
     width: 100%;
@@ -661,7 +661,7 @@ input:checked + .slider:before {
     margin: 1rem 0;
     max-height: 150px;
     overflow-y: auto;
-    font-family: "Courier New", monospace;
+    font-family: inherit;
     font-size: 0.8rem;
     color: var(--text-primary);
     white-space: pre-wrap;
@@ -1428,7 +1428,7 @@ input:checked + .slider:before {
 }
 
 .accent-color-hex {
-    font-family: "Courier New", monospace;
+    font-family: inherit;
     font-weight: 600;
     color: var(--text-primary);
     font-size: 1.1rem;
@@ -1479,14 +1479,18 @@ input:checked + .slider:before {
 }
 
 .accent-preset::after {
-    content: "✓";
+    content: "check";
     position: absolute;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
     color: white;
-    font-weight: bold;
-    font-size: 1rem;
+    font-family: "Material Symbols Rounded";
+    font-weight: normal;
+    font-size: 1.4rem;
+    line-height: 1;
+    font-feature-settings: "liga";
+    font-variation-settings: "wght" 600;
     text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
     opacity: 0;
     transition: opacity 0.3s ease;

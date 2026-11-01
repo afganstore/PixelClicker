@@ -139,10 +139,21 @@ class PixelClicker {
   }
 
   handleClick(event) {
-    const increment = this.getIncrementValue();
+    let increment = this.getIncrementValue();
+
+    // Критический клик (прокачки «Критический клик» и «Сила крита»)
+    let isCrit = false;
+    if (window.storeManager && window.storeManager.rollCrit) {
+      const critMultiplier = window.storeManager.rollCrit();
+      if (critMultiplier > 0) {
+        increment = Math.round(increment * critMultiplier);
+        isCrit = true;
+      }
+    }
+
     this.count += increment;
     this.playClickSound();
-    this.showClickOverlay(event, increment);
+    this.showClickOverlay(event, increment, isCrit);
     this.animateClick();
     this.saveCount();
     this.updateDisplay();
@@ -167,10 +178,10 @@ class PixelClicker {
     return { x, y };
   }
 
-  showClickOverlay(event, increment) {
+  showClickOverlay(event, increment, isCrit = false) {
     const overlay = document.createElement("div");
     overlay.className = "click-overlay";
-    overlay.textContent = `+${increment}`;
+    overlay.textContent = isCrit ? `КРИТ +${increment}` : `+${increment}`;
 
     const position = this.getRandomPositionAroundPixel(event);
     overlay.style.left = `${position.x}px`;
@@ -210,13 +221,28 @@ class PixelClicker {
         "0 2px 4px rgba(0, 0, 0, 0.8), 0 4px 20px rgba(160, 231, 160, 0.8)";
     }
 
+    if (isCrit) {
+      overlay.style.color = "#ff3d71";
+      overlay.style.fontWeight = "900";
+      overlay.style.letterSpacing = "0.04em";
+      overlay.style.textShadow =
+        "0 2px 4px rgba(0, 0, 0, 0.8), 0 4px 20px rgba(255, 61, 113, 0.9), 0 8px 40px rgba(255, 61, 113, 0.6)";
+    }
+
+    // Ограничиваем число одновременных «+N», чтобы при быстром кликанье
+    // страница не обрастала десятками анимируемых элементов
+    const alive = document.querySelectorAll(".click-overlay");
+    if (alive.length >= 14) alive[0].remove();
+
     document.body.appendChild(overlay);
 
-    setTimeout(() => {
+    const removeOverlay = () => {
       if (overlay.parentNode) {
         overlay.parentNode.removeChild(overlay);
       }
-    }, 1200);
+    };
+    overlay.addEventListener("animationend", removeOverlay, { once: true });
+    setTimeout(removeOverlay, 1300);
   }
 
   playClickSound() {
@@ -228,8 +254,12 @@ class PixelClicker {
   }
 
   animateClick() {
+    // Перезапускаем анимацию, чтобы пульс срабатывал на каждый быстрый клик
+    this.clickImage.classList.remove("click-pulse");
+    void this.clickImage.offsetWidth;
     this.clickImage.classList.add("click-pulse");
-    setTimeout(() => {
+    clearTimeout(this._pulseTimer);
+    this._pulseTimer = setTimeout(() => {
       this.clickImage.classList.remove("click-pulse");
     }, 150);
   }
@@ -238,18 +268,29 @@ class PixelClicker {
     const backgroundType = localStorage.getItem("backgroundType") || "gradient";
 
     // Анимация градиента нужна только для градиентных фонов
-    if (backgroundType === "gradient" || backgroundType === "custom-gradient") {
-      let position = 0;
+    if (backgroundType !== "gradient" && backgroundType !== "custom-gradient") {
+      return; // Для сплошного цвета анимация не нужна
+    }
 
-      const animateGradient = () => {
+    // Градиент уже двигает CSS-анимация (main.css, класс body). JS-цикл поверх неё
+    // ничего не давал (анимация перекрывает inline-стили), но каждый кадр гонял
+    // лишнюю работу и игнорировал тумблеры «Анимации» / «Анимированный градиент».
+    const cssDriven = getComputedStyle(document.body).animationName !== "none";
+    const animationsEnabled = localStorage.getItem("animationsEnabled") !== "false";
+    const gradientEnabled = localStorage.getItem("gradientEnabled") !== "false";
+    if (cssDriven || !animationsEnabled || !gradientEnabled) return;
+
+    // Запасной вариант: если CSS-анимация недоступна — двигаем градиент из JS,
+    // но только пока вкладка видна.
+    let position = 0;
+    const animateGradient = () => {
+      if (!document.hidden) {
         position = (position + 0.1) % 100;
         document.body.style.backgroundPosition = `${position}% ${position}%`;
-        requestAnimationFrame(animateGradient);
-      };
-
-      animateGradient();
-    }
-    // Для сплошного цвета анимация не нужна
+      }
+      requestAnimationFrame(animateGradient);
+    };
+    animateGradient();
   }
 
   loadSkinSetting() {
@@ -323,8 +364,15 @@ class PixelClicker {
       storeItems.forEach((item) => {
         if (item.type === "upgrade") {
           localStorage.removeItem(`upgrade_${item.id}_level`);
+        } else if (item.type === "case") {
+          localStorage.removeItem(`case_${item.id}_count`);
         }
       });
+    }
+
+    // Сбрасываем ежедневный дроп
+    if (window.dailyDrop && window.dailyDrop.reset) {
+      window.dailyDrop.reset();
     }
 
     // Обновляем интерфейсы

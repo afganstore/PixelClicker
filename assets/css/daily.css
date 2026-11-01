@@ -1,0 +1,374 @@
+/* ==========================================================================
+   Ежедневный дроп.
+   Окно использует общие классы окон (casino-popup / popup-content / close-btn),
+   поэтому анимации, шапка и тема берутся из casino.css и m3e.css.
+   Здесь только то, что нужно самому дропу.
+   ========================================================================== */
+
+/* Точка-уведомление на кнопке, когда дроп можно забрать */
+.icon-btn#dailyBtn {
+    position: relative;
+}
+
+.icon-btn#dailyBtn.daily-ready::after {
+    content: "";
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #ff3d71;
+    box-shadow:
+        0 0 0 2px var(--m3e-secondary-container, #4a4458),
+        0 0 10px rgba(255, 61, 113, 0.8);
+    animation: dailyDotPulse 1.6s ease-in-out infinite;
+}
+
+.icon-btn#dailyBtn.daily-ready .material-symbols-rounded {
+    animation: dailyGiftWiggle 2.8s ease-in-out infinite;
+}
+
+@keyframes dailyDotPulse {
+    0%,
+    100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.25);
+    }
+}
+
+@keyframes dailyGiftWiggle {
+    0%,
+    80%,
+    100% {
+        transform: rotate(0deg);
+    }
+    84% {
+        transform: rotate(-12deg);
+    }
+    88% {
+        transform: rotate(10deg);
+    }
+    92% {
+        transform: rotate(-6deg);
+    }
+    96% {
+        transform: rotate(4deg);
+    }
+}
+
+/* Окно */
+.daily-popup .popup-content {
+    max-width: 560px;
+    position: relative;
+    overflow-x: hidden;
+    overflow-y: hidden;
+}
+
+.daily-popup .popup-content.scrollable {
+    overflow-y: auto;
+}
+
+/* Слой для салюта: обрезает монетки и не даёт появиться полосе прокрутки */
+.daily-burst-layer {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    pointer-events: none;
+    z-index: 5;
+}
+
+.daily-body {
+    width: 100%;
+    box-sizing: border-box;
+}
+
+/* Серия */
+.daily-streak {
+    display: inline-flex;
+    align-items: center;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1.2rem;
+    border-radius: 999px;
+    font-size: 1rem;
+    background: var(--m3e-sc-highest, rgba(0, 0, 0, 0.35));
+    color: var(--m3e-on-surface, #fff);
+}
+
+.daily-streak .material-symbols-rounded {
+    font-size: 24px;
+    color: #ff8a3d;
+    font-variation-settings:
+        "FILL" 1,
+        "wght" 500,
+        "GRAD" 0,
+        "opsz" 24;
+}
+
+.daily-streak b {
+    font-size: 1.25rem;
+}
+
+.daily-week-badge {
+    font-size: 0.8rem;
+    font-weight: 600;
+    padding: 0.15rem 0.6rem;
+    border-radius: 999px;
+    background: var(--m3e-primary, var(--accent-color, #6750a4));
+    color: var(--m3e-on-primary, #fff);
+}
+
+/* Сетка дней */
+.daily-grid {
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.6rem;
+}
+
+.daily-card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.3rem;
+    padding: 0.7rem 0.3rem;
+    min-height: 104px;
+    border-radius: 18px;
+    background: var(--m3e-sc-highest, rgba(255, 255, 255, 0.08));
+    color: var(--m3e-on-surface, #fff);
+    border: 2px solid transparent;
+    box-sizing: border-box;
+    text-align: center;
+    transition:
+        transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1),
+        border-color 0.2s ease,
+        opacity 0.2s ease;
+}
+
+/* 7-й день — широкая карточка на всю нижнюю строку */
+.daily-card.big {
+    grid-column: span 2;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 0.5rem 0.9rem;
+    background: linear-gradient(
+        135deg,
+        var(--m3e-sc-highest, rgba(255, 255, 255, 0.08)) 0%,
+        color-mix(in srgb, #ffd54a 22%, var(--m3e-sc-highest, #36343b)) 100%
+    );
+}
+
+.daily-card.big {
+    align-content: center;
+    justify-content: center;
+}
+
+.daily-card.big .daily-card-day {
+    width: 100%;
+}
+
+.daily-card-case-empty {
+    visibility: hidden;
+}
+
+.daily-card-day {
+    font-size: 0.75rem;
+    font-weight: 600;
+    opacity: 0.7;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.daily-card-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 28px;
+}
+
+.daily-card-icon .coin {
+    width: 26px;
+    height: 26px;
+}
+
+.daily-card-coins {
+    font-size: 1.05rem;
+    font-weight: 800;
+}
+
+.daily-card-case {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.2rem;
+    font-size: 0.8rem;
+    font-weight: 700;
+    padding: 0.1rem 0.5rem;
+    border-radius: 999px;
+    background: color-mix(in srgb, currentColor 14%, transparent);
+}
+
+.daily-card-case .material-symbols-rounded {
+    font-size: 16px;
+}
+
+/* Состояния */
+.daily-card.claimed {
+    opacity: 0.55;
+}
+
+.daily-card .daily-check {
+    font-size: 28px;
+    color: var(--m3e-success, #9cd67d);
+    font-variation-settings:
+        "FILL" 1,
+        "wght" 500,
+        "GRAD" 0,
+        "opsz" 24;
+}
+
+.daily-card.locked {
+    opacity: 0.8;
+}
+
+.daily-card.today {
+    border-color: var(--m3e-primary, var(--accent-color, #6750a4));
+    transform: scale(1.04);
+    box-shadow: 0 0 0 4px
+        color-mix(in srgb, var(--m3e-primary, var(--accent-color, #6750a4)) 25%, transparent);
+    animation: dailyTodayGlow 1.8s ease-in-out infinite;
+}
+
+.daily-card.just-claimed {
+    animation: dailyCardPop 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes dailyTodayGlow {
+    0%,
+    100% {
+        box-shadow: 0 0 0 4px
+            color-mix(in srgb, var(--m3e-primary, var(--accent-color, #6750a4)) 25%, transparent);
+    }
+    50% {
+        box-shadow: 0 0 0 8px
+            color-mix(in srgb, var(--m3e-primary, var(--accent-color, #6750a4)) 10%, transparent);
+    }
+}
+
+@keyframes dailyCardPop {
+    0% {
+        transform: scale(1);
+    }
+    40% {
+        transform: scale(1.18);
+    }
+    100% {
+        transform: scale(1);
+    }
+}
+
+/* Результат, кнопка, подпись */
+.daily-result {
+    min-height: 1.8rem;
+    font-size: 1.15rem;
+    font-weight: 800;
+    text-align: center;
+    color: var(--m3e-on-surface, rgba(255, 255, 255, 0.85));
+}
+
+.daily-result {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+}
+
+.daily-result .material-symbols-rounded {
+    font-size: 24px;
+}
+
+.daily-result.win {
+    color: var(--m3e-success, #6dff7a);
+    animation: dailyResultPop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes dailyResultPop {
+    0% {
+        transform: scale(0.7);
+        opacity: 0;
+    }
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+.daily-claim-btn {
+    width: 100%;
+}
+
+.daily-info {
+    min-height: 1.2rem;
+    font-size: 0.9rem;
+    text-align: center;
+    color: var(--m3e-on-surface-variant, rgba(255, 255, 255, 0.7));
+}
+
+/* Салют из монет */
+.daily-burst-coin {
+    position: absolute;
+    z-index: 5;
+    pointer-events: none;
+    margin: -9px 0 0 -9px;
+    animation: dailyCoinBurst 1.1s cubic-bezier(0.2, 0.7, 0.3, 1) forwards;
+}
+
+@keyframes dailyCoinBurst {
+    0% {
+        transform: translate(0, 0) scale(0.4);
+        opacity: 1;
+    }
+    70% {
+        opacity: 1;
+    }
+    100% {
+        transform: translate(var(--dx), calc(var(--dy) + 60px)) scale(1);
+        opacity: 0;
+    }
+}
+
+/* Узкие экраны */
+@media (max-width: 480px) {
+    .daily-grid {
+        gap: 0.45rem;
+    }
+
+    .daily-card {
+        min-height: 92px;
+        padding: 0.55rem 0.2rem;
+    }
+
+    .daily-card-coins {
+        font-size: 0.95rem;
+    }
+
+    .casino-popup.daily-popup .popup-header h2 {
+        font-size: 1.35rem;
+    }
+}
+
+body.no-animations .icon-btn#dailyBtn.daily-ready::after,
+body.no-animations .icon-btn#dailyBtn.daily-ready .material-symbols-rounded,
+body.no-animations .daily-card.today {
+    animation: none;
+}
+
+/* Иконки новых прокачек в инвентаре */
+.inventory-upgrade-preview .material-symbols-rounded {
+    font-size: 44px;
+}

@@ -1,0 +1,497 @@
+/* ==========================================================================
+   Motion layer — анимации «везде».
+   --------------------------------------------------------------------------
+   • Подключается ПОСЛЕДНИМ (после m3e.css). Старые файлы не тронуты.
+   • Только добавляет: ничего не удаляет и не переопределяет чужие анимации.
+   • Всё на transform / opacity / translate / scale / rotate (GPU, без layout).
+   • Выключается тумблером «Анимации» (.no-animations) и prefers-reduced-motion.
+   • Пружины берём из m3e.css: --m3e-spring-spatial / bouncy / effects.
+   ========================================================================== */
+
+/* ---------- 0. Оптимизация ---------- */
+
+/* Вкладка не видна — все бесконечные анимации на паузе (motion.js ставит класс) */
+html.m3x-paused *,
+html.m3x-paused *::before,
+html.m3x-paused *::after {
+    animation-play-state: paused !important;
+}
+
+/* У body стояло transition: all — оно гоняло и background-position градиента,
+   то есть каждый кадр запускало лишнюю интерполяцию. Оставляем только нужное. */
+body {
+    transition:
+        background-color 0.5s ease,
+        color 0.5s ease;
+}
+
+/* ---------- 1. Ключевые кадры ---------- */
+@keyframes m3xDrop {
+    from {
+        opacity: 0;
+        transform: translateY(-24px) scale(0.96);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+@keyframes m3xRise {
+    from {
+        opacity: 0;
+        transform: translateY(22px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes m3xEnter {
+    from {
+        opacity: 0;
+        transform: scale(0.6) rotate(-6deg);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1) rotate(0deg);
+    }
+}
+
+@keyframes m3xIconPop {
+    from {
+        opacity: 0;
+        transform: scale(0.2) rotate(-90deg);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1) rotate(0deg);
+    }
+}
+
+@keyframes m3xIdle {
+    0%,
+    100% {
+        translate: 0 0;
+        rotate: 0deg;
+    }
+    25% {
+        translate: 0 -7px;
+        rotate: 0.8deg;
+    }
+    50% {
+        translate: 0 -11px;
+        rotate: 0deg;
+    }
+    75% {
+        translate: 0 -5px;
+        rotate: -0.8deg;
+    }
+}
+
+@keyframes m3xBreath {
+    0%,
+    100% {
+        scale: 1;
+    }
+    50% {
+        scale: 1.035;
+    }
+}
+
+@keyframes m3xPointer {
+    0%,
+    100% {
+        translate: 0 0;
+        opacity: 1;
+    }
+    50% {
+        translate: 0 4px;
+        opacity: 0.8;
+    }
+}
+
+@keyframes m3xWinner {
+    0% {
+        scale: 1;
+    }
+    35% {
+        scale: 1.16;
+    }
+    60% {
+        scale: 0.97;
+    }
+    100% {
+        scale: 1.06;
+    }
+}
+
+@keyframes m3xRing {
+    from {
+        opacity: 0.55;
+        transform: translate(-50%, -50%) scale(0.2);
+    }
+    to {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(1.7);
+    }
+}
+
+@keyframes m3xTick {
+    0% {
+        scale: 1;
+    }
+    35% {
+        scale: 1.18;
+    }
+    100% {
+        scale: 1;
+    }
+}
+
+@keyframes m3xFocus {
+    from {
+        outline-offset: 6px;
+        outline-color: transparent;
+    }
+    to {
+        outline-offset: 0;
+        outline-color: var(--accent-color);
+    }
+}
+
+@keyframes m3xFade {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes m3xSlideSide {
+    from {
+        opacity: 0;
+        transform: translateX(-16px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+/* ---------- 2. Главный экран ---------- */
+
+/* Шапка (счётчик + кнопки) «падает» сверху при загрузке */
+body .header {
+    animation: m3xDrop 650ms var(--m3e-spring-spatial) 60ms backwards;
+}
+
+/* Иконки в кнопках шапки выскакивают по очереди */
+body .header-buttons .icon-btn .material-symbols-rounded {
+    animation: m3xIconPop 560ms var(--m3e-spring-bouncy) backwards;
+    animation-delay: calc(var(--m3x-i, 0) * 70ms + 320ms);
+    transition:
+        font-variation-settings var(--m3e-t-fast) var(--m3e-spring-effects),
+        transform var(--m3e-t-fast) var(--m3e-spring-bouncy);
+}
+
+body .header-buttons .icon-btn:nth-child(1) {
+    --m3x-i: 0;
+}
+body .header-buttons .icon-btn:nth-child(2) {
+    --m3x-i: 1;
+}
+body .header-buttons .icon-btn:nth-child(3) {
+    --m3x-i: 2;
+}
+body .header-buttons .icon-btn:nth-child(4) {
+    --m3x-i: 3;
+}
+body .header-buttons .icon-btn:nth-child(5) {
+    --m3x-i: 4;
+}
+
+body .header-buttons .icon-btn:hover .material-symbols-rounded {
+    transform: scale(1.14) rotate(-8deg);
+}
+
+body .header-buttons .icon-btn:active .material-symbols-rounded {
+    transform: scale(0.85) rotate(8deg);
+}
+
+/* Пиксель: появление + «парение» (translate/rotate не конфликтуют с transform
+   у :active, hover и click-pulse) */
+body .click-area {
+    animation:
+        m3xEnter 850ms var(--m3e-spring-bouncy) 120ms backwards,
+        m3xIdle 7s ease-in-out 1s infinite;
+    will-change: transform, translate;
+}
+
+/* Лёгкий параллакс за курсором (переменные ставит motion.js) */
+body .click-image {
+    translate: calc(var(--m3x-px, 0) * 10px) calc(var(--m3x-py, 0) * 10px);
+    transition:
+        filter var(--m3e-t-fx) linear,
+        transform var(--m3e-t) var(--m3e-spring-bouncy),
+        translate 260ms ease-out;
+}
+
+/* Кольцо от клика (создаёт motion.js) */
+.m3x-ring {
+    position: fixed;
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    border: 3px solid color-mix(in srgb, var(--accent-color) 70%, #ffffff);
+    pointer-events: none;
+    z-index: 99;
+    animation: m3xRing 620ms var(--m3e-emphasized) forwards;
+}
+
+/* ---------- 3. Окна: шапка, контент, кнопка закрытия ---------- */
+body .popup-header {
+    animation: m3xDrop 520ms var(--m3e-spring-spatial) 90ms backwards;
+}
+
+body .store-content,
+body .skins-content,
+body .inventory-content,
+body .casino-body {
+    animation: m3xRise 600ms var(--m3e-spring-spatial) 140ms backwards;
+}
+
+body .settings-tabs {
+    animation: m3xFade 450ms linear 120ms backwards;
+}
+
+body .close-btn .material-symbols-rounded {
+    display: inline-block;
+    transition: transform var(--m3e-t) var(--m3e-spring-bouncy);
+}
+
+body .close-btn:hover .material-symbols-rounded {
+    transform: rotate(90deg) scale(1.1);
+}
+
+body .close-btn:active .material-symbols-rounded {
+    transform: rotate(180deg) scale(0.8);
+}
+
+/* ---------- 4. Магазин / скины / инвентарь ---------- */
+body .store-item-preview img,
+body .skin-preview img,
+body .inventory-item-preview {
+    transition: transform var(--m3e-t) var(--m3e-spring-bouncy);
+}
+
+body .store-item:hover .store-item-preview img {
+    transform: scale(1.1) rotate(-3deg);
+}
+
+body .inventory-item:hover .inventory-item-preview {
+    transform: scale(1.08) translateY(-2px);
+}
+
+body .inventory-item:active .inventory-item-preview,
+body .store-item:active .store-item-preview img {
+    transform: scale(0.94);
+}
+
+body .inventory-empty {
+    animation: m3xFade 500ms linear 200ms backwards;
+}
+
+body .insufficient-funds {
+    animation: m3xSlideSide 450ms var(--m3e-spring-spatial) backwards;
+}
+
+body .store-item-price .price {
+    display: inline-block;
+    transition: transform var(--m3e-t-fast) var(--m3e-spring-bouncy);
+}
+
+body .store-item:hover .store-item-price .price {
+    transform: scale(1.1);
+}
+
+body .buy-btn .material-symbols-rounded,
+body .link-btn .material-symbols-rounded {
+    display: inline-block;
+    transition: transform var(--m3e-t-fast) var(--m3e-spring-bouncy);
+}
+
+body .buy-btn:not(:disabled):hover .material-symbols-rounded,
+body .link-btn:hover .material-symbols-rounded {
+    transform: translateX(3px) scale(1.15);
+}
+
+/* ---------- 5. Настройки ---------- */
+body .setting-item .setting-label {
+    transition: transform var(--m3e-t-fast) var(--m3e-spring-spatial);
+}
+
+body .setting-item:hover .setting-label {
+    transform: translateX(4px);
+}
+
+body .danger-btn .material-symbols-rounded {
+    display: inline-block;
+}
+
+body .color-preview,
+body .gradient-color-preview,
+body .accent-color-preview {
+    transition:
+        transform var(--m3e-t-fast) var(--m3e-spring-bouncy),
+        box-shadow var(--m3e-t-fx) linear;
+}
+
+body .color-preview:hover,
+body .gradient-color-preview:hover,
+body .accent-color-preview:hover {
+    transform: scale(1.06);
+}
+
+body .color-preview:active,
+body .gradient-color-preview:active,
+body .accent-color-preview:active {
+    transform: scale(0.94);
+}
+
+/* Фокус в полях ввода и списках — мягкое «проявление» рамки */
+body .code-editor:focus-visible,
+body .casino-bet-input:focus-visible,
+body .background-select:focus-visible,
+body .sound-select:focus-visible,
+body .color-preview-input:focus-visible,
+body .gradient-color-input:focus-visible,
+body .accent-color-preview-input:focus-visible {
+    outline: 2px solid var(--accent-color);
+    animation: m3xFocus 280ms var(--m3e-emphasized) both;
+}
+
+/* Список автозагрузки и статус мода */
+body .mod-status {
+    animation: m3xRise 420ms var(--m3e-spring-spatial) backwards;
+}
+
+/* ---------- 6. Казино ---------- */
+body .casino-balance {
+    animation: m3xSlideSide 520ms var(--m3e-spring-spatial) 170ms backwards;
+}
+
+body .casino-bet {
+    animation: m3xRise 520ms var(--m3e-spring-spatial) 230ms backwards;
+}
+
+body .casino-info {
+    animation: m3xFade 600ms linear 380ms backwards;
+}
+
+/* Кнопка «Крутить» дышит, пока доступна */
+body .casino-spin-btn:not(:disabled) {
+    animation: m3xBreath 2.4s ease-in-out 0.8s infinite;
+}
+
+/* Баланс «тикает» при изменении (класс ставит motion.js) */
+body #casinoBalance {
+    display: inline-block;
+}
+
+body #casinoBalance.m3x-tick {
+    animation: m3xTick 420ms var(--m3e-spring-bouncy);
+}
+
+/* ---------- 7. Кейс ---------- */
+body .case-pointer {
+    animation: m3xPointer 1.1s ease-in-out infinite;
+}
+
+body .case-card.winner {
+    animation: m3xWinner 900ms var(--m3e-spring-bouncy) forwards;
+}
+
+body .case-hint.show {
+    animation: m3xRise 480ms var(--m3e-spring-spatial) backwards;
+}
+
+/* ---------- 8. Плавная смена темы (класс ставит motion.js на ~0.5 с) ---------- */
+html.m3x-theme-switch *:not(.switch):not(.switch *),
+html.m3x-theme-switch *:not(.switch):not(.switch *)::before,
+html.m3x-theme-switch *:not(.switch):not(.switch *)::after {
+    transition:
+        background-color 450ms linear,
+        color 450ms linear,
+        border-color 450ms linear,
+        fill 450ms linear,
+        box-shadow 450ms linear !important;
+}
+
+/* ---------- 8.5 Закрытие окна выбора цвета ---------- */
+/* Раньше класс .color-picker-close ставился, но его перебивало
+   .color-picker-dialog { animation: colorPickerOpen } из settings.css,
+   поэтому окно пропадало рывком. Здесь специфичность выше. */
+@keyframes m3xPickerOut {
+    from {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
+    }
+    to {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(0.82) translateY(24px);
+    }
+}
+
+@keyframes m3xPickerScrimOut {
+    from {
+        opacity: 1;
+    }
+    to {
+        opacity: 0;
+    }
+}
+
+body .color-picker-dialog.color-picker-close {
+    animation: m3xPickerOut 260ms var(--m3e-emphasized) forwards;
+    pointer-events: none;
+}
+
+body .color-picker-overlay:has(.color-picker-close) {
+    animation: m3xPickerScrimOut 260ms linear forwards;
+    pointer-events: none;
+}
+
+/* ---------- 9. Отключение ---------- */
+.no-animations .m3x-ring {
+    display: none !important;
+}
+
+.no-animations .click-image {
+    translate: 0 0 !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    body .header,
+    body .click-area,
+    body .popup-header,
+    body .store-content,
+    body .skins-content,
+    body .inventory-content,
+    body .casino-body,
+    body .casino-spin-btn,
+    body .case-pointer,
+    body .header-buttons .icon-btn .material-symbols-rounded {
+        animation: none !important;
+    }
+
+    .m3x-ring {
+        display: none !important;
+    }
+
+    body .click-image {
+        translate: 0 0 !important;
+    }
+}

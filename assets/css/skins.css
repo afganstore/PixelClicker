@@ -126,7 +126,13 @@
 }
 
 .skin-card.active::after {
-    content: "✓";
+    content: "check";
+    font-family: "Material Symbols Rounded";
+    font-size: 20px;
+    font-weight: normal;
+    line-height: 1;
+    font-feature-settings: "liga";
+    font-variation-settings: "wght" 600;
     position: absolute;
     top: 1rem;
     right: 1rem;

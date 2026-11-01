@@ -986,11 +986,21 @@ class SettingsManager {
   }
 
   resetAllData() {
-    if (
-      confirm(
-        "Вы уверены, что хотите сбросить все данные? Это действие нельзя отменить.",
-      )
-    ) {
+    const resetQuestion =
+      "Вы уверены, что хотите сбросить все данные? Это действие нельзя отменить.";
+    // Собственное окно подтверждения (dialogs.js); системный confirm — запасной вариант
+    const askReset = window.appDialog
+      ? window.appDialog.confirm(resetQuestion, {
+          title: "Сбросить все данные?",
+          icon: "delete_forever",
+          okText: "Сбросить",
+          cancelText: "Отмена",
+          danger: true,
+        })
+      : Promise.resolve(confirm(resetQuestion));
+
+    askReset.then((confirmedReset) => {
+    if (confirmedReset) {
       if (clicker) {
         clicker.resetData();
       }
@@ -1017,6 +1027,7 @@ class SettingsManager {
         this.loadSoundOptions();
       }, 100);
     }
+    });
   }
 
   loadSettings() {

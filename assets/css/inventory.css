@@ -1,0 +1,273 @@
+/* Инвентарь */
+.inventory-popup {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: var(--card-bg);
+    backdrop-filter: blur(20px);
+    z-index: 1000;
+    display: none;
+    opacity: 0;
+}
+
+.inventory-popup.active {
+    display: flex;
+    opacity: 1;
+    align-items: center;
+    justify-content: center;
+    animation: popupOpenOverlay 0.3s ease-out;
+}
+
+.inventory-popup.popup-closing {
+    animation: popupCloseOverlay 0.4s ease-out forwards;
+}
+
+.inventory-popup .popup-content {
+    background: var(--card-bg);
+    border-radius: 24px;
+    padding: 0;
+    width: 90%;
+    max-width: 900px;
+    max-height: 90vh;
+    overflow: hidden;
+    box-shadow: var(--shadow);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    animation: popupOpenContent 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+    display: flex;
+    flex-direction: column;
+}
+
+.inventory-popup.popup-closing .popup-content {
+    animation: popupCloseContent 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+.inventory-popup .popup-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5rem 2rem 1rem 2rem;
+    background: var(--card-bg);
+    flex-shrink: 0;
+}
+
+.inventory-popup .popup-header h2 {
+    color: var(--text-primary);
+    font-size: 1.8rem;
+}
+
+.inventory-popup .close-btn {
+    background: none;
+    border: none;
+    font-size: 2rem;
+    color: var(--text-primary);
+    cursor: pointer;
+    padding: 0.5rem;
+    border-radius: 50%;
+    transition: all 0.3s ease;
+}
+
+.inventory-popup .close-btn:hover {
+    background-color: var(--bg-secondary);
+    transform: rotate(90deg) scale(1.1);
+}
+
+.inventory-content {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    flex-grow: 1;
+    overflow-y: auto;
+    padding: 0 2rem 2rem 2rem;
+}
+
+.inventory-hint {
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+}
+
+.inventory-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 1rem;
+}
+
+.inventory-empty {
+    grid-column: 1 / -1;
+    text-align: center;
+    color: var(--text-secondary);
+    padding: 3rem 0;
+    font-size: 1.1rem;
+}
+
+.inventory-item {
+    background: var(--bg-secondary);
+    border-radius: 16px;
+    padding: 1rem;
+    border: 2px solid transparent;
+    transition: all 0.25s ease;
+    cursor: default;
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
+    animation: fadeInUp 0.4s ease-out;
+}
+
+.inventory-item:hover {
+    border-color: var(--accent-color);
+    transform: translateY(-4px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+.inventory-item.inv-case {
+    cursor: pointer;
+    border-bottom: 4px solid #ffb800;
+}
+
+.inventory-item.inv-upgrade {
+    border-bottom: 4px solid var(--success-color);
+}
+
+.inventory-item-preview {
+    position: relative;
+    width: 100%;
+    height: 100px;
+    border-radius: 12px;
+    background: var(--card-bg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 0.75rem;
+    overflow: hidden;
+}
+
+.inventory-item-preview img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    -webkit-user-drag: none;
+}
+
+.inventory-upgrade-preview {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--accent-color);
+    color: #ffffff;
+    font-size: 24px;
+    font-weight: bold;
+}
+
+.inventory-badge {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    padding: 0.15rem 0.55rem;
+    border-radius: 10px;
+    background: rgba(0, 0, 0, 0.7);
+    color: #ffffff;
+    font-size: 0.8rem;
+    font-weight: 700;
+}
+
+.inventory-badge.selected {
+    background: var(--success-color);
+}
+
+.inventory-item-name {
+    color: var(--text-primary);
+    font-weight: 600;
+    font-size: 1rem;
+    margin-bottom: 0.2rem;
+}
+
+.inventory-item-sub {
+    color: var(--text-secondary);
+    font-size: 0.8rem;
+}
+
+/* Контекстное меню */
+.inventory-menu {
+    position: fixed;
+    z-index: 1200;
+    min-width: 190px;
+    padding: 0.4rem;
+    border-radius: 14px;
+    background: var(--bg-primary);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+    animation: scaleIn 0.15s ease-out;
+}
+
+.inventory-menu-title {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+}
+
+.inventory-menu-note {
+    padding: 0.5rem 0.75rem 0.6rem 0.75rem;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+}
+
+.inventory-menu-row {
+    display: flex;
+    gap: 0.4rem;
+}
+
+.inventory-menu-btn {
+    display: block;
+    width: 100%;
+    padding: 0.6rem 0.75rem;
+    border: none;
+    border-radius: 10px;
+    background: transparent;
+    color: var(--text-primary);
+    font-size: 0.95rem;
+    text-align: left;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.inventory-menu-row .inventory-menu-btn {
+    text-align: center;
+    background: var(--bg-secondary);
+}
+
+.inventory-menu-btn:hover {
+    background: var(--bg-secondary);
+}
+
+.inventory-menu-btn.danger {
+    color: var(--error-color);
+    font-weight: 600;
+}
+
+.inventory-menu-btn.danger:hover {
+    background: rgba(244, 67, 54, 0.15);
+}
+
+@media (max-width: 768px) {
+    .inventory-popup .popup-content {
+        margin: 1rem;
+        width: calc(100% - 2rem);
+    }
+
+    .inventory-popup .popup-header {
+        padding: 1rem 1.5rem 0.75rem 1.5rem;
+    }
+
+    .inventory-content {
+        padding: 0 1.5rem 1.5rem 1.5rem;
+    }
+
+    .inventory-grid {
+        grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+        gap: 0.75rem;
+    }
+}

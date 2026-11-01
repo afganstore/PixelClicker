@@ -207,6 +207,17 @@ class SkinsManager {
 
     // Анимация выбранной карточки
     selectedCard.classList.add("active", "skin-selected");
+    // Пульс через Web Animations API: CSS-анимация появления карточки не перезапускается
+    if (selectedCard.animate) {
+      selectedCard.animate(
+        [
+          { transform: "scale(1)" },
+          { transform: "scale(1.05)" },
+          { transform: "scale(1)" },
+        ],
+        { duration: 600, easing: "ease-in-out" },
+      );
+    }
 
     // Создаем эффект частиц
     this.createParticles(selectedCard);
@@ -234,17 +245,23 @@ class SkinsManager {
     const skin = storeItems.find((s) => s.id === skinId);
     if (!skin) return;
 
+    // Быстрые клики: сбрасываем таймеры прошлой смены, чтобы они не накладывались
+    clearTimeout(this._skinTimerA);
+    clearTimeout(this._skinTimerB);
+    clearTimeout(this._skinTimerC);
+    clicker.clickImage.classList.remove("animate-bounceIn");
+
     // Анимация смены изображения
     clicker.clickImage.classList.add("skin-change");
 
-    setTimeout(() => {
+    this._skinTimerA = setTimeout(() => {
       clicker.changeSkin(skin.image);
 
-      setTimeout(() => {
+      this._skinTimerB = setTimeout(() => {
         clicker.clickImage.classList.remove("skin-change");
         clicker.clickImage.classList.add("animate-bounceIn");
 
-        setTimeout(() => {
+        this._skinTimerC = setTimeout(() => {
           clicker.clickImage.classList.remove("animate-bounceIn");
         }, 600);
       }, 200);

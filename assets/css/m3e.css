@@ -1,0 +1,2733 @@
+/* ==========================================================================
+   Material 3 Expressive — слой редизайна для Pixel Clicker
+   --------------------------------------------------------------------------
+   • Подключается ПОСЛЕДНИМ, старые CSS/JS не изменены — только переопределяются.
+   • Все цвета выводятся из --accent-color, поэтому «Акцентный цвет» из настроек
+     продолжает работать (светлая/тёмная тема — тоже).
+   • Шрифт: Google Sans (Flex), иконки: Material Symbols Rounded.
+   • Анимации: пружины (spring) через linear(), форм-морфинг, state layers,
+     ripple. Отключаются тумблером «Анимации» (.no-animations) и
+     prefers-reduced-motion.
+   ========================================================================== */
+
+@property --m3e-sl {
+    syntax: "<percentage>";
+    inherits: false;
+    initial-value: 0%;
+}
+
+/* ---------- 1. Токены ---------- */
+:root {
+    --m3e-font:
+        "Google Sans Flex", "Google Sans", "Product Sans", "Roboto", system-ui,
+        -apple-system, "Segoe UI", sans-serif;
+    --m3e-font-code:
+        "Google Sans Code", "Roboto Mono", ui-monospace, SFMono-Regular,
+        Consolas, monospace;
+
+    /* Пружины. spatial — с лёгким перелётом, effects — без. */
+    --m3e-spring-spatial: linear(
+        0, 0.0614, 0.203, 0.3755, 0.5466, 0.6977, 0.82, 0.9117, 0.9752, 1.0151,
+        1.0367, 1.0452, 1.0451, 1.0399, 1.0324, 1.0244, 1.0169, 1.0107, 1.0058,
+        1.0023, 1, 0.9987, 0.998, 0.9979, 0.998, 0.9983, 0.9987, 0.9991, 0.9994,
+        0.9996, 0.9998, 1, 1, 1.0001, 1.0001, 1.0001, 1
+    );
+    --m3e-spring-bouncy: linear(
+        0, 0.0636, 0.2165, 0.4098, 0.6066, 0.7824, 0.9234, 1.025, 1.0886,
+        1.1197, 1.126, 1.1151, 1.0942, 1.0694, 1.0449, 1.0235, 1.0067, 0.9948,
+        0.9877, 0.9845, 0.9842, 0.9859, 0.9887, 0.9919, 0.9949, 0.9975, 0.9995,
+        1.0009, 1.0017, 1.002, 1.002, 1.0017, 1.0013, 1.0009, 1.0006, 1.0003, 1
+    );
+    --m3e-spring-effects: linear(
+        0, 0.0407, 0.1331, 0.246, 0.3615, 0.4698, 0.5664, 0.6497, 0.7197,
+        0.7775, 0.8245, 0.8625, 0.8927, 0.9167, 0.9356, 0.9503, 0.9618, 0.9707,
+        0.9776, 0.9829, 0.987, 0.9901, 0.9925, 0.9943, 1
+    );
+    --m3e-emphasized: cubic-bezier(0.2, 0, 0, 1);
+
+    --m3e-t-fast: 350ms;
+    --m3e-t: 500ms;
+    --m3e-t-slow: 650ms;
+    --m3e-t-fx: 200ms;
+
+    /* Формы */
+    --m3e-r-xs: 4px;
+    --m3e-r-sm: 8px;
+    --m3e-r-md: 12px;
+    --m3e-r-lg: 16px;
+    --m3e-r-xl: 28px;
+    --m3e-r-xxl: 36px;
+    --m3e-r-full: 999px;
+
+    /* Elevation */
+    --m3e-e1: 0 1px 2px rgba(0, 0, 0, 0.3), 0 1px 3px 1px rgba(0, 0, 0, 0.15);
+    --m3e-e2: 0 1px 2px rgba(0, 0, 0, 0.3), 0 2px 6px 2px rgba(0, 0, 0, 0.15);
+    --m3e-e3: 0 4px 8px 3px rgba(0, 0, 0, 0.15), 0 1px 3px rgba(0, 0, 0, 0.3);
+    --m3e-e4: 0 6px 10px 4px rgba(0, 0, 0, 0.15), 0 2px 3px rgba(0, 0, 0, 0.3);
+
+    /* Цветовые роли (светлая тема) */
+    --m3e-primary: var(--accent-color);
+    --m3e-on-primary: #ffffff; /* пересчитывается в m3e.js по яркости акцента */
+    --m3e-primary-container: color-mix(in oklab, var(--accent-color) 24%, #ffffff);
+    --m3e-on-primary-container: color-mix(in oklab, var(--accent-color) 62%, #000000);
+    --m3e-secondary-container: color-mix(in oklab, var(--accent-color) 13%, #e6e0e9);
+    --m3e-on-secondary-container: color-mix(in oklab, var(--accent-color) 30%, #1d1b20);
+    --m3e-surface: color-mix(in oklab, var(--accent-color) 3%, #fffbff);
+    --m3e-sc-lowest: color-mix(in oklab, var(--accent-color) 2%, #ffffff);
+    --m3e-sc-low: color-mix(in oklab, var(--accent-color) 5%, #f7f2fa);
+    --m3e-sc: color-mix(in oklab, var(--accent-color) 7%, #f3edf7);
+    --m3e-sc-high: color-mix(in oklab, var(--accent-color) 9%, #ece6f0);
+    --m3e-sc-highest: color-mix(in oklab, var(--accent-color) 11%, #e6e0e9);
+    --m3e-on-surface: #1d1b20;
+    --m3e-on-surface-variant: #49454f;
+    --m3e-outline: #79747e;
+    --m3e-outline-variant: #cac4d0;
+    --m3e-inverse-surface: #322f35;
+    --m3e-inverse-on-surface: #f5eff7;
+    --m3e-error: #b3261e;
+    --m3e-on-error: #ffffff;
+    --m3e-error-container: #f9dedc;
+    --m3e-on-error-container: #410e0b;
+    --m3e-success: #386a20;
+    --m3e-on-success: #ffffff;
+    --m3e-success-container: #b8f397;
+    --m3e-on-success-container: #072100;
+    --m3e-scrim: rgba(20, 16, 28, 0.42);
+    --m3e-case-bg: #1a1624;
+
+    /* Старые переменные проекта → ролям M3 (разметка и JS их используют) */
+    --bg-primary: var(--m3e-surface);
+    --bg-secondary: var(--m3e-sc-high);
+    --text-primary: var(--m3e-on-surface);
+    --text-secondary: var(--m3e-on-surface-variant);
+    --card-bg: var(--m3e-sc-high);
+    --shadow: var(--m3e-e2);
+    --success-color: var(--m3e-success);
+    --error-color: var(--m3e-error);
+}
+
+:root[data-theme="dark"] {
+    --m3e-primary-container: color-mix(in oklab, var(--accent-color) 36%, #1d1b20);
+    --m3e-on-primary-container: color-mix(in oklab, var(--accent-color) 28%, #ffffff);
+    --m3e-secondary-container: color-mix(in oklab, var(--accent-color) 16%, #36343b);
+    --m3e-on-secondary-container: color-mix(in oklab, var(--accent-color) 16%, #e6e0e9);
+    --m3e-surface: color-mix(in oklab, var(--accent-color) 6%, #141218);
+    --m3e-sc-lowest: color-mix(in oklab, var(--accent-color) 5%, #0f0d13);
+    --m3e-sc-low: color-mix(in oklab, var(--accent-color) 7%, #1d1b20);
+    --m3e-sc: color-mix(in oklab, var(--accent-color) 8%, #211f26);
+    --m3e-sc-high: color-mix(in oklab, var(--accent-color) 9%, #2b2930);
+    --m3e-sc-highest: color-mix(in oklab, var(--accent-color) 10%, #36343b);
+    --m3e-on-surface: #e6e0e9;
+    --m3e-on-surface-variant: #cac4d0;
+    --m3e-outline: #938f99;
+    --m3e-outline-variant: #49454f;
+    --m3e-inverse-surface: #e6e0e9;
+    --m3e-inverse-on-surface: #322f35;
+    --m3e-error: #f2b8b5;
+    --m3e-on-error: #601410;
+    --m3e-error-container: #8c1d18;
+    --m3e-on-error-container: #f9dedc;
+    --m3e-success: #9cd67d;
+    --m3e-on-success: #123800;
+    --m3e-success-container: #1f5105;
+    --m3e-on-success-container: #b8f397;
+    --m3e-scrim: rgba(0, 0, 0, 0.55);
+    --m3e-case-bg: #0d0b12;
+    --m3e-on-primary: #1d1b20;
+}
+
+@supports not (transition-timing-function: linear(0, 1)) {
+    :root {
+        --m3e-spring-spatial: cubic-bezier(0.34, 1.3, 0.64, 1);
+        --m3e-spring-bouncy: cubic-bezier(0.34, 1.56, 0.64, 1);
+        --m3e-spring-effects: cubic-bezier(0.2, 0, 0, 1);
+    }
+}
+
+/* Окна наследуют общие роли (перебиваем «казино-тему» из casino-theme.css) */
+body .store-popup,
+body .skins-popup,
+body .settings-popup,
+body .inventory-popup,
+body .casino-popup,
+body .confirmation-modal,
+body .inventory-menu {
+    --bg-primary: var(--m3e-sc-high);
+    --bg-secondary: var(--m3e-sc-highest);
+    --text-primary: var(--m3e-on-surface);
+    --text-secondary: var(--m3e-on-surface-variant);
+    --card-bg: var(--m3e-sc-high);
+    --shadow: var(--m3e-e3);
+    --gold: var(--m3e-primary);
+    --gold-dark: var(--m3e-outline);
+    --casino-gold: var(--m3e-primary);
+    --casino-gold-dark: var(--m3e-outline);
+}
+
+/* ---------- 2. База: шрифт, иконки ---------- */
+html,
+body,
+button,
+input,
+select,
+textarea {
+    font-family: var(--m3e-font);
+}
+
+body {
+    letter-spacing: 0;
+    -webkit-font-smoothing: antialiased;
+    font-synthesis: none;
+    color: var(--m3e-on-surface);
+}
+
+.material-symbols-rounded {
+    font-family: "Material Symbols Rounded";
+    font-weight: normal;
+    font-style: normal;
+    font-size: 24px;
+    line-height: 1;
+    letter-spacing: normal;
+    text-transform: none;
+    display: inline-block;
+    width: 1em;
+    overflow: hidden; /* пока шрифт не загрузился, название иконки не вылезает наружу */
+    white-space: nowrap;
+    word-wrap: normal;
+    direction: ltr;
+    flex: none;
+    user-select: none;
+    -webkit-font-smoothing: antialiased;
+    font-feature-settings: "liga";
+    font-variation-settings:
+        "FILL" 0,
+        "wght" 400,
+        "GRAD" 0,
+        "opsz" 24;
+    transition: font-variation-settings var(--m3e-t-fast) var(--m3e-spring-effects);
+}
+
+.m3e-ic-inline {
+    font-size: 1.15em;
+    vertical-align: -0.2em;
+    margin-inline: 0.05em 0.25em;
+}
+
+::selection {
+    background: var(--m3e-primary-container);
+    color: var(--m3e-on-primary-container);
+}
+
+/* Тонкие скроллбары */
+* {
+    scrollbar-width: thin;
+    scrollbar-color: var(--m3e-outline-variant) transparent;
+}
+
+/* Фокус для клавиатуры */
+:focus-visible {
+    outline: 3px solid color-mix(in oklab, var(--m3e-primary) 70%, transparent);
+    outline-offset: 2px;
+}
+
+/* ---------- 3. Ripple + state layer ---------- */
+.m3e-ripple {
+    position: absolute;
+    border-radius: 50%;
+    pointer-events: none;
+    background: currentColor;
+    opacity: 0.18;
+    transform: scale(0);
+    animation: m3eRipple 650ms var(--m3e-emphasized) forwards;
+    z-index: 0;
+}
+
+@keyframes m3eRipple {
+    60% {
+        opacity: 0.16;
+    }
+    to {
+        transform: scale(1);
+        opacity: 0;
+    }
+}
+
+.icon-btn,
+.close-btn,
+.tab-btn,
+.buy-btn,
+.upgrade-btn,
+.case-btn,
+.danger-btn,
+.link-btn,
+.mod-btn,
+.example-btn,
+.confirm-btn,
+.color-picker-confirm,
+.color-picker-cancel,
+.casino-spin-btn,
+.casino-bet-quick,
+.inventory-menu-btn,
+.auto-load-remove {
+    position: relative;
+    overflow: hidden;
+    isolation: isolate;
+    --m3e-sl: 0%;
+    transition:
+        border-radius var(--m3e-t-fast) var(--m3e-spring-spatial),
+        transform var(--m3e-t-fast) var(--m3e-spring-spatial),
+        background-color var(--m3e-t-fx) linear,
+        color var(--m3e-t-fx) linear,
+        box-shadow var(--m3e-t-fx) linear,
+        --m3e-sl var(--m3e-t-fx) linear;
+}
+
+.icon-btn:hover,
+.close-btn:hover,
+.tab-btn:hover,
+.buy-btn:hover,
+.upgrade-btn:hover,
+.case-btn:hover,
+.danger-btn:hover,
+.link-btn:hover,
+.mod-btn:hover,
+.example-btn:hover,
+.confirm-btn:hover,
+.color-picker-confirm:hover,
+.color-picker-cancel:hover,
+.casino-spin-btn:hover,
+.casino-bet-quick:hover,
+.inventory-menu-btn:hover,
+.auto-load-remove:hover {
+    --m3e-sl: 8%;
+}
+
+.icon-btn:focus-visible,
+.close-btn:focus-visible,
+.tab-btn:focus-visible,
+.buy-btn:focus-visible,
+.mod-btn:focus-visible,
+.confirm-btn:focus-visible,
+.casino-spin-btn:focus-visible,
+.casino-bet-quick:focus-visible {
+    --m3e-sl: 10%;
+}
+
+.icon-btn:active,
+.close-btn:active,
+.tab-btn:active,
+.buy-btn:active,
+.upgrade-btn:active,
+.case-btn:active,
+.danger-btn:active,
+.link-btn:active,
+.mod-btn:active,
+.confirm-btn:active,
+.color-picker-confirm:active,
+.color-picker-cancel:active,
+.casino-spin-btn:active,
+.casino-bet-quick:active,
+.inventory-menu-btn:active {
+    --m3e-sl: 10%;
+}
+
+/* ---------- 4. Главный экран ---------- */
+body .header {
+    top: 1.5rem;
+    left: 1.5rem;
+    gap: 1rem;
+}
+
+body .counter {
+    font-family: var(--m3e-font);
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.02em;
+    color: var(--m3e-on-primary-container);
+    background: var(--m3e-primary-container);
+    backdrop-filter: none;
+    border: none;
+    border-radius: var(--m3e-r-xxl) var(--m3e-r-xxl) var(--m3e-r-xxl) var(--m3e-r-md);
+    box-shadow: var(--m3e-e2);
+    text-shadow: none;
+    padding: 0.85rem 2rem;
+    transform-origin: left center;
+    transition:
+        border-radius var(--m3e-t) var(--m3e-spring-spatial),
+        box-shadow var(--m3e-t-fx) linear;
+}
+
+body .counter:hover {
+    border-radius: var(--m3e-r-xxl);
+    box-shadow: var(--m3e-e3);
+}
+
+body .counter.m3e-bump {
+    animation: m3eBump 420ms var(--m3e-spring-bouncy);
+}
+
+@keyframes m3eBump {
+    0% {
+        transform: scale(1);
+    }
+    30% {
+        transform: scale(1.045);
+    }
+    100% {
+        transform: scale(1);
+    }
+}
+
+body .header-buttons {
+    gap: 0.5rem;
+    padding: 0.35rem;
+    background: var(--m3e-sc-high);
+    border-radius: var(--m3e-r-full);
+    box-shadow: var(--m3e-e1);
+}
+
+body .icon-btn {
+    width: 56px;
+    height: 56px;
+    padding: 0;
+    border: none;
+    backdrop-filter: none;
+    background: var(--m3e-secondary-container);
+    color: var(--m3e-on-secondary-container);
+    border-radius: 20px;
+    box-shadow: inset 0 0 0 999px color-mix(in srgb, currentColor var(--m3e-sl), transparent);
+}
+
+body .icon-btn:hover {
+    background: var(--m3e-secondary-container);
+    border-radius: var(--m3e-r-full);
+    transform: translateY(-2px);
+    border-color: transparent;
+}
+
+body .icon-btn:hover .material-symbols-rounded,
+body .icon-btn:focus-visible .material-symbols-rounded {
+    font-variation-settings:
+        "FILL" 1,
+        "wght" 500,
+        "GRAD" 0,
+        "opsz" 24;
+}
+
+body .icon-btn:active {
+    background: var(--m3e-primary);
+    color: var(--m3e-on-primary);
+    border-radius: var(--m3e-r-md);
+    transform: scale(0.92);
+}
+
+body .icon-btn .material-symbols-rounded {
+    font-size: 28px;
+}
+
+body .click-area {
+    isolation: isolate;
+}
+
+body .click-area:active {
+    transform: scale(0.94);
+}
+
+body .click-area {
+    transition: transform var(--m3e-t-fast) var(--m3e-spring-bouncy);
+}
+
+body .click-image {
+    border-radius: var(--m3e-r-xxl);
+    transition:
+        filter var(--m3e-t-fx) linear,
+        transform var(--m3e-t) var(--m3e-spring-bouncy);
+}
+
+body .click-image:hover {
+    transform: translateY(-4px) scale(1.025);
+}
+
+/* ---------- 5. Окна (общее) ---------- */
+body .store-popup,
+body .skins-popup,
+body .settings-popup,
+body .inventory-popup,
+body .casino-popup {
+    background: var(--m3e-scrim);
+    -webkit-backdrop-filter: blur(14px) saturate(1.2);
+    backdrop-filter: blur(14px) saturate(1.2);
+}
+
+body .confirmation-modal {
+    background: var(--m3e-scrim);
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+}
+
+body .store-popup .popup-content,
+body .skins-popup .popup-content,
+body .settings-popup .popup-content,
+body .inventory-popup .popup-content,
+body .casino-popup .popup-content,
+body .confirmation-content {
+    background: var(--m3e-sc-high);
+    color: var(--m3e-on-surface);
+    border: none;
+    border-radius: var(--m3e-r-xxl);
+    box-shadow: var(--m3e-e4);
+}
+
+/* Появление/закрытие: пружина. Длительность закрытия ≤ 400мс — как ждёт JS. */
+body .store-popup.active,
+body .skins-popup.active,
+body .settings-popup.active,
+body .inventory-popup.active,
+body .casino-popup.active,
+body .confirmation-modal.active {
+    animation: m3eScrimIn var(--m3e-t-fx) linear both;
+}
+
+body .store-popup.active .popup-content,
+body .skins-popup.active .popup-content,
+body .settings-popup.active .popup-content,
+body .inventory-popup.active .popup-content,
+body .casino-popup.active .popup-content,
+body .confirmation-modal.active .confirmation-content {
+    animation: m3ePopIn var(--m3e-t-slow) var(--m3e-spring-spatial) both;
+}
+
+body .store-popup.popup-closing,
+body .skins-popup.popup-closing,
+body .settings-popup.popup-closing,
+body .inventory-popup.popup-closing,
+body .casino-popup.popup-closing {
+    animation: m3eScrimOut 320ms linear forwards;
+}
+
+body .store-popup.popup-closing .popup-content,
+body .skins-popup.popup-closing .popup-content,
+body .settings-popup.popup-closing .popup-content,
+body .inventory-popup.popup-closing .popup-content,
+body .casino-popup.popup-closing .popup-content {
+    animation: m3ePopOut 300ms var(--m3e-emphasized) forwards;
+}
+
+@keyframes m3eScrimIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes m3eScrimOut {
+    from {
+        opacity: 1;
+    }
+    to {
+        opacity: 0;
+    }
+}
+
+@keyframes m3ePopIn {
+    from {
+        opacity: 0;
+        transform: translateY(48px) scale(0.78);
+        border-radius: 96px;
+    }
+    30% {
+        opacity: 1;
+    }
+    to {
+        opacity: 1;
+        transform: none;
+    }
+}
+
+@keyframes m3ePopOut {
+    to {
+        opacity: 0;
+        transform: translateY(28px) scale(0.9);
+    }
+}
+
+/* Шапка окна */
+body .store-popup .popup-header,
+body .skins-popup .popup-header,
+body .settings-popup .popup-header,
+body .inventory-popup .popup-header,
+body .casino-popup .popup-header {
+    background: transparent;
+    padding: 1.25rem 1.5rem 0.75rem 2rem;
+}
+
+body .store-popup .popup-header h2,
+body .skins-popup .popup-header h2,
+body .settings-popup .popup-header h2,
+body .inventory-popup .popup-header h2,
+body .casino-popup .popup-header h2,
+body .confirmation-title {
+    font-family: var(--m3e-font);
+    font-size: 1.75rem;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    text-transform: none;
+    background: none;
+    -webkit-background-clip: initial;
+    background-clip: initial;
+    -webkit-text-fill-color: currentColor;
+    color: var(--m3e-on-surface);
+    filter: none;
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+}
+
+body .store-popup .close-btn,
+body .skins-popup .close-btn,
+body .settings-popup .close-btn,
+body .inventory-popup .close-btn,
+body .casino-popup .close-btn {
+    width: 48px;
+    height: 48px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0;
+    line-height: 1;
+    color: var(--m3e-on-surface-variant);
+    background: var(--m3e-sc-highest);
+    border: none;
+    border-radius: var(--m3e-r-full);
+    box-shadow: inset 0 0 0 999px color-mix(in srgb, currentColor var(--m3e-sl), transparent);
+}
+
+body .store-popup .close-btn .material-symbols-rounded,
+body .skins-popup .close-btn .material-symbols-rounded,
+body .settings-popup .close-btn .material-symbols-rounded,
+body .inventory-popup .close-btn .material-symbols-rounded,
+body .casino-popup .close-btn .material-symbols-rounded {
+    font-size: 26px;
+    transition: transform var(--m3e-t) var(--m3e-spring-bouncy);
+}
+
+body .store-popup .close-btn:hover,
+body .skins-popup .close-btn:hover,
+body .settings-popup .close-btn:hover,
+body .inventory-popup .close-btn:hover,
+body .casino-popup .close-btn:hover:not(:disabled) {
+    background: var(--m3e-sc-highest);
+    border-radius: var(--m3e-r-lg);
+    transform: none;
+}
+
+body .store-popup .close-btn:hover .material-symbols-rounded,
+body .skins-popup .close-btn:hover .material-symbols-rounded,
+body .settings-popup .close-btn:hover .material-symbols-rounded,
+body .inventory-popup .close-btn:hover .material-symbols-rounded,
+body .casino-popup .close-btn:hover:not(:disabled) .material-symbols-rounded {
+    transform: rotate(90deg);
+}
+
+body .store-popup .close-btn:active,
+body .skins-popup .close-btn:active,
+body .settings-popup .close-btn:active,
+body .inventory-popup .close-btn:active,
+body .casino-popup .close-btn:active:not(:disabled) {
+    border-radius: var(--m3e-r-sm);
+    transform: scale(0.9);
+}
+
+body .casino-popup .close-btn:disabled {
+    opacity: 0.38;
+}
+
+/* Контент окон */
+body .store-content,
+body .skins-content,
+body .inventory-content {
+    padding: 0 1.5rem 1.5rem 1.5rem;
+}
+
+/* ---------- 6. Карточки: магазин / скины / инвентарь ---------- */
+body .store-item,
+body .skin-card,
+body .inventory-item {
+    position: relative;
+    overflow: hidden;
+    background: var(--m3e-sc-low);
+    color: var(--m3e-on-surface);
+    border: 2px solid transparent;
+    border-radius: var(--m3e-r-xl);
+    box-shadow: none;
+    transition:
+        transform var(--m3e-t) var(--m3e-spring-spatial),
+        border-radius var(--m3e-t) var(--m3e-spring-spatial),
+        background-color var(--m3e-t-fx) linear,
+        box-shadow var(--m3e-t-fx) linear,
+        border-color var(--m3e-t-fx) linear;
+    animation: m3eRise var(--m3e-t-slow) var(--m3e-spring-spatial) both;
+    animation-delay: calc(var(--i, 0) * 45ms);
+}
+
+@keyframes m3eRise {
+    from {
+        opacity: 0;
+        transform: translateY(32px) scale(0.92);
+    }
+    35% {
+        opacity: 1;
+    }
+    to {
+        opacity: 1;
+        transform: none;
+    }
+}
+
+body .store-grid .store-item:nth-child(n) {
+    animation-delay: calc(var(--i, 0) * 45ms);
+}
+
+body .store-item:hover,
+body .skin-card:hover,
+body .inventory-item:hover {
+    background: color-mix(in oklab, var(--m3e-primary) 8%, var(--m3e-sc-low));
+    border-color: transparent;
+    border-radius: var(--m3e-r-lg) var(--m3e-r-xxl) var(--m3e-r-lg) var(--m3e-r-xxl);
+    transform: translateY(-6px);
+    box-shadow: var(--m3e-e3);
+}
+
+body .store-item:active,
+body .skin-card:active,
+body .inventory-item:active {
+    transform: scale(0.97);
+    border-radius: var(--m3e-r-lg);
+}
+
+body .skin-card.active {
+    background: var(--m3e-primary-container);
+    color: var(--m3e-on-primary-container);
+    border-color: var(--m3e-primary);
+    box-shadow: var(--m3e-e1);
+}
+
+body .skin-card.active .skin-info p {
+    color: inherit;
+    opacity: 0.8;
+}
+
+body .store-item.owned {
+    background: color-mix(in oklab, var(--m3e-success-container) 55%, var(--m3e-sc-low));
+    border-color: transparent;
+}
+
+body .store-item.owned::after {
+    background: var(--m3e-success);
+    color: var(--m3e-on-success);
+    border-radius: var(--m3e-r-full);
+    padding: 0.3rem 0.85rem;
+    font-family: var(--m3e-font);
+    font-weight: 600;
+    box-shadow: var(--m3e-e1);
+}
+
+body .skin-card.active::after {
+    background: var(--m3e-primary);
+    color: var(--m3e-on-primary);
+    width: 32px;
+    height: 32px;
+    box-shadow: var(--m3e-e1);
+    animation: m3ePopIn 500ms var(--m3e-spring-bouncy) both;
+}
+
+body .upgrade-item,
+body .upgrade-item.max-level {
+    border-left: 2px solid transparent !important;
+}
+
+body .upgrade-item.max-level {
+    background: var(--m3e-primary-container) !important;
+    color: var(--m3e-on-primary-container);
+}
+
+body .store-item-preview,
+body .skin-preview,
+body .inventory-item-preview {
+    background: var(--m3e-sc-highest);
+    border-radius: var(--m3e-r-xl) var(--m3e-r-md) var(--m3e-r-xl) var(--m3e-r-md);
+    box-shadow: none;
+    transition: border-radius var(--m3e-t) var(--m3e-spring-spatial);
+}
+
+body .store-item:hover .store-item-preview,
+body .skin-card:hover .skin-preview,
+body .inventory-item:hover .inventory-item-preview {
+    border-radius: var(--m3e-r-md) var(--m3e-r-xl) var(--m3e-r-md) var(--m3e-r-xl);
+    box-shadow: none;
+}
+
+body .store-item-info h3,
+body .skin-info h3,
+body .inventory-item-name {
+    font-weight: 600;
+    letter-spacing: 0;
+    color: inherit;
+}
+
+body .store-item-info p,
+body .skin-info p,
+body .inventory-item-sub,
+body .case-owned-count,
+body .inventory-hint {
+    color: var(--m3e-on-surface-variant);
+}
+
+body .price {
+    color: var(--m3e-primary);
+    font-weight: 700;
+    text-shadow: none;
+    font-variant-numeric: tabular-nums;
+}
+
+body .insufficient-funds {
+    color: var(--m3e-error);
+}
+
+body .case-item {
+    border-left: none !important;
+}
+
+body .inventory-badge {
+    background: var(--m3e-primary);
+    color: var(--m3e-on-primary);
+    border-radius: var(--m3e-r-full);
+    font-weight: 600;
+    box-shadow: var(--m3e-e1);
+}
+
+body .inventory-badge.selected {
+    background: var(--m3e-success);
+    color: var(--m3e-on-success);
+}
+
+body .inventory-hint {
+    background: var(--m3e-sc-low);
+    border-radius: var(--m3e-r-lg);
+}
+
+body .inventory-empty {
+    color: var(--m3e-on-surface-variant);
+}
+
+/* Кнопки покупки: filled button, форма «морфится» при нажатии */
+body .buy-btn,
+body .upgrade-btn,
+body .case-btn {
+    height: 48px;
+    padding: 0 1.5rem;
+    border: none;
+    font-family: var(--m3e-font);
+    font-weight: 600;
+    font-size: 0.95rem;
+    letter-spacing: 0.01em;
+    border-radius: var(--m3e-r-full);
+    background: var(--m3e-primary) !important;
+    color: var(--m3e-on-primary) !important;
+    box-shadow: inset 0 0 0 999px color-mix(in srgb, currentColor var(--m3e-sl), transparent) !important;
+    filter: none;
+}
+
+body .buy-btn:hover:not(:disabled),
+body .upgrade-btn:hover:not(:disabled),
+body .case-btn:hover:not(:disabled) {
+    background: var(--m3e-primary) !important;
+    border-radius: var(--m3e-r-lg);
+    transform: translateY(-1px);
+    filter: none;
+}
+
+body .buy-btn:active:not(:disabled),
+body .upgrade-btn:active:not(:disabled),
+body .case-btn:active:not(:disabled) {
+    border-radius: var(--m3e-r-sm);
+    transform: scale(0.96);
+}
+
+body .buy-btn:disabled,
+body .case-btn:disabled {
+    background: color-mix(in srgb, var(--m3e-on-surface) 12%, transparent) !important;
+    color: color-mix(in srgb, var(--m3e-on-surface) 38%, transparent) !important;
+    box-shadow: none !important;
+    opacity: 1;
+}
+
+body .buy-btn.owned {
+    background: var(--m3e-success-container) !important;
+    color: var(--m3e-on-success-container) !important;
+}
+
+body .upgrade-btn.max-level {
+    background: var(--m3e-primary-container) !important;
+    color: var(--m3e-on-primary-container) !important;
+}
+
+body .progress-bar {
+    background: var(--m3e-sc-highest);
+    border-radius: var(--m3e-r-full);
+    height: 8px;
+}
+
+body .progress-fill {
+    background: var(--m3e-primary);
+    border-radius: var(--m3e-r-full);
+    transition: width var(--m3e-t-slow) var(--m3e-spring-spatial);
+}
+
+body .progress-text {
+    color: var(--m3e-on-surface-variant);
+}
+
+/* Контекстное меню инвентаря */
+body .inventory-menu {
+    background: var(--m3e-sc);
+    color: var(--m3e-on-surface);
+    border: none;
+    border-radius: var(--m3e-r-lg);
+    box-shadow: var(--m3e-e3);
+    padding: 0.5rem;
+    animation: m3eMenuIn 280ms var(--m3e-spring-spatial) both;
+    transform-origin: top left;
+}
+
+@keyframes m3eMenuIn {
+    from {
+        opacity: 0;
+        transform: scale(0.8);
+    }
+    to {
+        opacity: 1;
+        transform: none;
+    }
+}
+
+body .inventory-menu-title {
+    color: var(--m3e-on-surface-variant);
+    font-weight: 500;
+}
+
+body .inventory-menu-note {
+    color: var(--m3e-on-surface-variant);
+}
+
+body .inventory-menu-btn {
+    background: transparent;
+    color: var(--m3e-on-surface);
+    border: none;
+    border-radius: var(--m3e-r-md);
+    min-height: 44px;
+    font-weight: 500;
+    box-shadow: inset 0 0 0 999px color-mix(in srgb, currentColor var(--m3e-sl), transparent);
+}
+
+body .inventory-menu-btn:hover {
+    background: transparent;
+    color: var(--m3e-on-surface);
+}
+
+body .inventory-menu-btn.danger {
+    color: var(--m3e-error);
+}
+
+body .inventory-menu-btn.danger:hover {
+    background: transparent;
+    color: var(--m3e-error);
+}
+
+/* ---------- 7. Настройки ---------- */
+body .settings-tabs {
+    display: flex;
+    gap: 0.5rem;
+    padding: 0.25rem 1.5rem 0.75rem 1.5rem;
+    overflow-x: auto;
+    background: transparent;
+    scroll-snap-type: x proximity;
+}
+
+body .tab-btn {
+    flex: none;
+    height: 40px;
+    padding: 0 1rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-family: var(--m3e-font);
+    font-weight: 500;
+    font-size: 0.92rem;
+    color: var(--m3e-on-surface-variant);
+    background: transparent;
+    border: 1px solid var(--m3e-outline);
+    border-radius: var(--m3e-r-md);
+    box-shadow: inset 0 0 0 999px color-mix(in srgb, currentColor var(--m3e-sl), transparent);
+    scroll-snap-align: start;
+    white-space: nowrap;
+}
+
+body .tab-btn:hover {
+    background: transparent;
+    color: var(--m3e-on-surface);
+    transform: none;
+    border-radius: var(--m3e-r-lg);
+}
+
+body .tab-btn.active {
+    background: var(--m3e-secondary-container);
+    color: var(--m3e-on-secondary-container);
+    border-color: transparent;
+    border-radius: var(--m3e-r-full);
+    box-shadow: inset 0 0 0 999px color-mix(in srgb, currentColor var(--m3e-sl), transparent);
+}
+
+body .tab-btn .tab-emoji {
+    display: inline-flex;
+    align-items: center;
+}
+
+body .tab-btn .tab-emoji .material-symbols-rounded {
+    font-size: 20px;
+}
+
+body .tab-btn.active .tab-emoji .material-symbols-rounded {
+    font-variation-settings:
+        "FILL" 1,
+        "wght" 500,
+        "GRAD" 0,
+        "opsz" 24;
+}
+
+body .settings-content {
+    padding: 0.5rem 1.5rem 1.5rem 1.5rem;
+}
+
+body .setting-category {
+    background: var(--m3e-sc-low);
+    border: none;
+    border-radius: var(--m3e-r-xl);
+    box-shadow: none;
+    transform: none;
+    padding: 1.25rem 1.25rem 1rem;
+    animation: m3eRise var(--m3e-t-slow) var(--m3e-spring-spatial) both;
+}
+
+body .setting-category:hover {
+    background: var(--m3e-sc-low);
+    border-color: transparent;
+    transform: none;
+    box-shadow: none;
+}
+
+body .category-title {
+    border-bottom: none;
+    padding-bottom: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    font-size: 1.1rem;
+    font-weight: 600;
+    letter-spacing: 0;
+    color: var(--m3e-on-surface);
+    text-transform: none;
+}
+
+body .category-title .material-symbols-rounded {
+    color: var(--m3e-primary);
+    font-variation-settings:
+        "FILL" 1,
+        "wght" 500,
+        "GRAD" 0,
+        "opsz" 24;
+}
+
+body .setting-item {
+    display: flex;
+    flex-direction: row-reverse;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.75rem 1rem;
+    background: transparent;
+    border-radius: var(--m3e-r-lg);
+    transition: background-color var(--m3e-t-fx) linear;
+}
+
+body .setting-item:hover {
+    background: color-mix(in srgb, var(--m3e-on-surface) 6%, transparent);
+    transform: none;
+}
+
+body .setting-label {
+    color: var(--m3e-on-surface);
+    font-weight: 500;
+}
+
+/* Switch — M3 Expressive: ручка растёт при нажатии, внутри галочка */
+body .switch {
+    position: relative;
+    display: inline-block;
+    width: 52px;
+    height: 32px;
+    flex: none;
+}
+
+body .switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+body .slider {
+    position: absolute;
+    inset: 0;
+    cursor: pointer;
+    background: var(--m3e-sc-highest);
+    border: 2px solid var(--m3e-outline);
+    border-radius: var(--m3e-r-full);
+    box-shadow: none;
+    transition:
+        background-color var(--m3e-t-fx) linear,
+        border-color var(--m3e-t-fx) linear;
+}
+
+body .slider::before {
+    content: "";
+    position: absolute;
+    left: 4px;
+    top: 50%;
+    bottom: auto;
+    width: 16px;
+    height: 16px;
+    margin: 0;
+    border-radius: 50%;
+    background: var(--m3e-outline);
+    box-shadow: none;
+    transform: translateY(-50%);
+    transition:
+        left var(--m3e-t-fast) var(--m3e-spring-spatial),
+        width var(--m3e-t-fast) var(--m3e-spring-spatial),
+        height var(--m3e-t-fast) var(--m3e-spring-spatial),
+        background-color var(--m3e-t-fx) linear;
+}
+
+body .slider::after {
+    content: "check";
+    position: absolute;
+    left: 20px;
+    top: 50%;
+    width: 24px;
+    height: 24px;
+    transform: translateY(-50%) scale(0);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: "Material Symbols Rounded";
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--m3e-on-primary-container);
+    font-feature-settings: "liga";
+    overflow: hidden;
+    white-space: nowrap;
+    opacity: 0;
+    transition:
+        transform var(--m3e-t-fast) var(--m3e-spring-bouncy),
+        opacity var(--m3e-t-fx) linear;
+    pointer-events: none;
+}
+
+body .switch:hover .slider::before {
+    background: var(--m3e-on-surface-variant);
+}
+
+body .switch:active .slider::before {
+    width: 28px;
+    height: 28px;
+    left: 2px;
+}
+
+body .switch input:checked + .slider {
+    background: var(--m3e-primary);
+    border-color: var(--m3e-primary);
+}
+
+body .switch input:checked + .slider::before {
+    left: 20px;
+    width: 24px;
+    height: 24px;
+    background: var(--m3e-on-primary);
+    transform: translateY(-50%);
+}
+
+body .switch input:checked + .slider::after {
+    transform: translateY(-50%) scale(1);
+    opacity: 1;
+    color: var(--m3e-primary);
+}
+
+body .switch:active input:checked + .slider::before {
+    width: 28px;
+    height: 28px;
+    left: 18px;
+}
+
+body .switch:active input:checked + .slider::after {
+    left: 18px;
+    width: 28px;
+}
+
+body .switch input:focus-visible + .slider {
+    outline: 3px solid color-mix(in oklab, var(--m3e-primary) 60%, transparent);
+    outline-offset: 2px;
+}
+
+/* Выпадающие списки — outlined text field */
+body .background-select,
+body .sound-select {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 100%;
+    height: 56px;
+    padding: 0 3rem 0 1rem;
+    font-family: var(--m3e-font);
+    font-size: 1rem;
+    font-weight: 500;
+    color: var(--m3e-on-surface);
+    background-color: transparent;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 -960 960 960' fill='%23938f99'%3E%3Cpath d='M480-360 280-560h400L480-360Z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.85rem center;
+    border: 1px solid var(--m3e-outline);
+    border-radius: var(--m3e-r-md);
+    box-shadow: none;
+    transition:
+        border-color var(--m3e-t-fx) linear,
+        border-radius var(--m3e-t) var(--m3e-spring-spatial);
+}
+
+body .background-select:hover,
+body .sound-select:hover {
+    border-color: var(--m3e-on-surface);
+    background-color: transparent;
+    transform: none;
+}
+
+body .background-select:focus,
+body .sound-select:focus {
+    border-color: var(--m3e-primary);
+    box-shadow: inset 0 0 0 1px var(--m3e-primary);
+    outline: none;
+    border-radius: var(--m3e-r-lg);
+}
+
+body .background-select option,
+body .sound-select option {
+    background: var(--m3e-sc);
+    color: var(--m3e-on-surface);
+}
+
+/* Цвет фона / градиент / акцент */
+body .color-picker-label,
+body .accent-color-label,
+body .accent-presets-title {
+    color: var(--m3e-on-surface);
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+body .accent-color-description,
+body .gradient-color-label {
+    color: var(--m3e-on-surface-variant);
+}
+
+body .color-preview,
+body .gradient-color-preview,
+body .accent-color-preview,
+body .gradient-preview {
+    border: none;
+    border-radius: var(--m3e-r-xl);
+    box-shadow: var(--m3e-e1);
+    transition:
+        border-radius var(--m3e-t) var(--m3e-spring-spatial),
+        transform var(--m3e-t) var(--m3e-spring-bouncy),
+        box-shadow var(--m3e-t-fx) linear;
+}
+
+body .color-preview:hover,
+body .gradient-color-preview:hover,
+body .accent-color-preview:hover {
+    border-radius: var(--m3e-r-full);
+    transform: scale(1.06) rotate(-3deg);
+    box-shadow: var(--m3e-e3);
+}
+
+body .accent-color-hex {
+    font-family: var(--m3e-font-code);
+    font-weight: 600;
+    color: var(--m3e-on-surface);
+}
+
+body .accent-color-name {
+    color: var(--m3e-on-surface-variant);
+}
+
+body .accent-preset {
+    border: none;
+    border-radius: var(--m3e-r-full);
+    box-shadow: var(--m3e-e1);
+    transition:
+        border-radius var(--m3e-t) var(--m3e-spring-spatial),
+        transform var(--m3e-t) var(--m3e-spring-bouncy),
+        box-shadow var(--m3e-t-fx) linear;
+}
+
+body .accent-preset:hover {
+    transform: scale(1.15);
+    border-radius: var(--m3e-r-lg);
+    box-shadow: var(--m3e-e3);
+}
+
+body .accent-preset.active {
+    border-radius: var(--m3e-r-md);
+    box-shadow:
+        0 0 0 3px var(--m3e-sc-low),
+        0 0 0 5px var(--m3e-on-surface);
+}
+
+/* Диалог выбора цвета (создаётся из JS) */
+body .color-picker-overlay {
+    background: var(--m3e-scrim);
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+}
+
+body .color-picker-dialog {
+    background: var(--m3e-sc-high);
+    color: var(--m3e-on-surface);
+    border: none;
+    border-radius: var(--m3e-r-xxl);
+    box-shadow: var(--m3e-e4);
+    padding: 1.75rem;
+}
+
+body .color-picker-dialog h3 {
+    font-weight: 600;
+    color: var(--m3e-on-surface);
+}
+
+body .color-picker-dialog input[type="color"] {
+    border-radius: var(--m3e-r-xl) !important;
+    background: transparent;
+}
+
+body .color-picker-actions {
+    gap: 0.5rem;
+    justify-content: flex-end;
+}
+
+body .color-picker-cancel,
+body .color-picker-confirm,
+body .confirm-btn,
+body .mod-btn,
+body .example-btn {
+    height: 44px;
+    padding: 0 1.5rem;
+    font-family: var(--m3e-font);
+    font-weight: 600;
+    border: none;
+    border-radius: var(--m3e-r-full);
+    background: transparent;
+    color: var(--m3e-primary);
+    box-shadow: inset 0 0 0 999px color-mix(in srgb, currentColor var(--m3e-sl), transparent);
+}
+
+body .color-picker-confirm,
+body .confirm-yes,
+body .apply-mod {
+    background: var(--m3e-primary);
+    color: var(--m3e-on-primary);
+}
+
+body .clear-mod {
+    background: var(--m3e-secondary-container);
+    color: var(--m3e-on-secondary-container);
+}
+
+body .color-picker-cancel:hover,
+body .color-picker-confirm:hover,
+body .confirm-btn:hover,
+body .mod-btn:hover:not(:disabled),
+body .example-btn:hover {
+    transform: none;
+    border-radius: var(--m3e-r-lg);
+    filter: none;
+    box-shadow: inset 0 0 0 999px color-mix(in srgb, currentColor var(--m3e-sl), transparent);
+}
+
+body .color-picker-cancel:hover,
+body .confirm-no:hover {
+    background: transparent;
+    color: var(--m3e-primary);
+}
+
+body .confirm-yes:hover,
+body .color-picker-confirm:hover,
+body .apply-mod:hover:not(:disabled) {
+    background: var(--m3e-primary);
+    color: var(--m3e-on-primary);
+}
+
+body .confirm-no {
+    color: var(--m3e-primary);
+}
+
+body .mod-btn:active:not(:disabled),
+body .confirm-btn:active,
+body .color-picker-confirm:active,
+body .color-picker-cancel:active {
+    border-radius: var(--m3e-r-sm);
+    transform: scale(0.96);
+}
+
+body .mod-btn:disabled {
+    background: color-mix(in srgb, var(--m3e-on-surface) 12%, transparent);
+    color: color-mix(in srgb, var(--m3e-on-surface) 38%, transparent);
+}
+
+/* Кнопки действий и ссылки */
+body .danger-btn {
+    height: 48px;
+    padding: 0 1.5rem;
+    font-family: var(--m3e-font);
+    font-weight: 600;
+    border: none;
+    border-radius: var(--m3e-r-full);
+    background: var(--m3e-error-container);
+    color: var(--m3e-on-error-container);
+    box-shadow: inset 0 0 0 999px color-mix(in srgb, currentColor var(--m3e-sl), transparent);
+}
+
+body .danger-btn:hover {
+    background: var(--m3e-error-container);
+    border-radius: var(--m3e-r-lg);
+    transform: none;
+    box-shadow: inset 0 0 0 999px color-mix(in srgb, currentColor var(--m3e-sl), transparent);
+}
+
+body .danger-btn:active {
+    border-radius: var(--m3e-r-sm);
+    transform: scale(0.97);
+}
+
+body .link-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.6rem;
+    height: 48px;
+    padding: 0 1.5rem;
+    margin: 0.25rem 0.5rem 0.25rem 0;
+    font-family: var(--m3e-font);
+    font-weight: 600;
+    text-decoration: none;
+    border: none;
+    border-radius: var(--m3e-r-full);
+    background: var(--m3e-secondary-container);
+    color: var(--m3e-on-secondary-container);
+    box-shadow: inset 0 0 0 999px color-mix(in srgb, currentColor var(--m3e-sl), transparent);
+}
+
+body .link-btn:hover {
+    background: var(--m3e-secondary-container);
+    border-radius: var(--m3e-r-lg);
+    transform: none;
+    box-shadow: inset 0 0 0 999px color-mix(in srgb, currentColor var(--m3e-sl), transparent);
+}
+
+body .link-btn:active {
+    border-radius: var(--m3e-r-sm);
+    transform: scale(0.97);
+}
+
+/* Моды */
+body .mod-warning {
+    background: var(--m3e-error-container);
+    color: var(--m3e-on-error-container);
+    border: none;
+    border-radius: var(--m3e-r-xl);
+}
+
+body .mod-warning h4 {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: inherit;
+}
+
+body .code-editor,
+body .code-preview {
+    font-family: var(--m3e-font-code);
+    background: var(--m3e-sc-lowest);
+    color: var(--m3e-on-surface);
+    border: 1px solid var(--m3e-outline-variant);
+    border-radius: var(--m3e-r-xl);
+}
+
+body .code-editor:focus {
+    border-color: var(--m3e-primary);
+    box-shadow: inset 0 0 0 1px var(--m3e-primary);
+    outline: none;
+}
+
+body .mod-status {
+    border: none;
+    border-radius: var(--m3e-r-lg);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+body .mod-status.success {
+    background: var(--m3e-success-container);
+    color: var(--m3e-on-success-container);
+}
+
+body .mod-status.error {
+    background: var(--m3e-error-container);
+    color: var(--m3e-on-error-container);
+}
+
+body .mod-status.info {
+    background: var(--m3e-secondary-container);
+    color: var(--m3e-on-secondary-container);
+}
+
+body .auto-load-container,
+body .auto-load-item,
+body .mod-metadata-info,
+body .mod-metadata-preview,
+body .metadata-display {
+    background: var(--m3e-sc);
+    border: none;
+    border-radius: var(--m3e-r-xl);
+    color: var(--m3e-on-surface);
+}
+
+body .auto-load-container {
+    display: flex;
+    flex-direction: row-reverse;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+body .auto-load-item {
+    animation: m3eRise var(--m3e-t) var(--m3e-spring-spatial) both;
+}
+
+body .auto-load-meta,
+body .auto-load-description {
+    color: var(--m3e-on-surface-variant);
+}
+
+body .auto-load-remove {
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    color: var(--m3e-error);
+    border: none;
+    border-radius: var(--m3e-r-full);
+    box-shadow: inset 0 0 0 999px color-mix(in srgb, currentColor var(--m3e-sl), transparent);
+}
+
+body .auto-load-remove:hover {
+    background: transparent;
+    border-radius: var(--m3e-r-md);
+    transform: none;
+}
+
+/* ---------- 8. Диалог подтверждения ---------- */
+body .confirmation-content {
+    padding: 1.75rem;
+    max-width: 520px;
+    border-radius: var(--m3e-r-xxl);
+}
+
+body .confirmation-header {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 0.75rem;
+}
+
+body .confirmation-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 64px;
+    height: 64px;
+    border-radius: 22px 30px 22px 30px;
+    background: var(--m3e-error-container);
+    color: var(--m3e-on-error-container);
+    font-size: 0;
+    animation: m3eWobble 5s var(--m3e-spring-spatial) infinite alternate;
+}
+
+body .confirmation-icon .material-symbols-rounded {
+    font-size: 34px;
+    font-variation-settings:
+        "FILL" 1,
+        "wght" 500,
+        "GRAD" 0,
+        "opsz" 24;
+}
+
+@keyframes m3eWobble {
+    0% {
+        border-radius: 22px 30px 22px 30px;
+        transform: rotate(0);
+    }
+    100% {
+        border-radius: 32px 20px 32px 20px;
+        transform: rotate(-6deg);
+    }
+}
+
+body .confirmation-message {
+    color: var(--m3e-on-surface-variant);
+    text-align: center;
+}
+
+body .confirmation-actions {
+    justify-content: flex-end;
+    gap: 0.5rem;
+}
+
+/* ---------- 9. Казино ---------- */
+body .casino-body {
+    gap: 1.25rem;
+}
+
+body .casino-balance {
+    background: var(--m3e-secondary-container);
+    color: var(--m3e-on-secondary-container);
+    border: none;
+    box-shadow: none;
+    border-radius: var(--m3e-r-full);
+    font-weight: 500;
+}
+
+body .casino-balance span {
+    color: var(--m3e-on-secondary-container);
+    text-shadow: none;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+}
+
+body .casino-slots {
+    background: var(--m3e-sc-low);
+    border: none;
+    border-radius: var(--m3e-r-xxl);
+    box-shadow: var(--m3e-e1);
+    transition:
+        box-shadow var(--m3e-t) var(--m3e-spring-spatial),
+        background-color var(--m3e-t-fx) linear;
+}
+
+/* «лампочки» казино убираем из оформления */
+body .casino-slots::before {
+    display: none;
+}
+
+body .casino-slots::after {
+    background: linear-gradient(
+        90deg,
+        transparent,
+        color-mix(in srgb, var(--m3e-primary) 70%, transparent),
+        transparent
+    );
+}
+
+body .casino-reel {
+    border-radius: var(--m3e-r-xl);
+    background: color-mix(in oklab, var(--m3e-primary) 6%, #ffffff);
+    box-shadow: inset 0 0 0 1px var(--m3e-outline-variant);
+}
+
+body .casino-reel::before {
+    background: linear-gradient(rgba(0, 0, 0, 0.12), transparent);
+}
+
+body .casino-reel::after {
+    background: linear-gradient(transparent, rgba(0, 0, 0, 0.12));
+}
+
+body .casino-slots.win {
+    background: var(--m3e-success-container);
+    box-shadow: 0 0 0 3px var(--m3e-success), var(--m3e-e3);
+    animation: m3eWin 700ms var(--m3e-spring-bouncy) 2;
+}
+
+body .casino-slots.lose {
+    background: var(--m3e-error-container);
+    box-shadow: 0 0 0 2px var(--m3e-error);
+    animation: m3eShake 420ms var(--m3e-emphasized);
+}
+
+@keyframes m3eWin {
+    0%,
+    100% {
+        transform: scale(1);
+    }
+    40% {
+        transform: scale(1.04);
+    }
+}
+
+@keyframes m3eShake {
+    0%,
+    100% {
+        transform: translateX(0);
+    }
+    20% {
+        transform: translateX(-8px);
+    }
+    40% {
+        transform: translateX(7px);
+    }
+    60% {
+        transform: translateX(-5px);
+    }
+    80% {
+        transform: translateX(3px);
+    }
+}
+
+body .casino-bet label {
+    color: var(--m3e-on-surface-variant);
+    letter-spacing: 0.04em;
+    text-transform: none;
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+body .casino-bet-input {
+    height: 56px;
+    background: transparent;
+    color: var(--m3e-on-surface);
+    border: 1px solid var(--m3e-outline);
+    border-radius: var(--m3e-r-md);
+    box-shadow: none;
+    font-family: var(--m3e-font);
+    font-variant-numeric: tabular-nums;
+    transition:
+        border-color var(--m3e-t-fx) linear,
+        border-radius var(--m3e-t) var(--m3e-spring-spatial);
+}
+
+body .casino-bet-input::placeholder {
+    color: var(--m3e-on-surface-variant);
+    opacity: 0.7;
+}
+
+body .casino-bet-input:focus {
+    border-color: var(--m3e-primary);
+    box-shadow: inset 0 0 0 1px var(--m3e-primary);
+    border-radius: var(--m3e-r-lg);
+}
+
+body .casino-bet-quick {
+    min-width: 56px;
+    height: 56px;
+    padding: 0 0.9rem;
+    font-family: var(--m3e-font);
+    font-weight: 600;
+    color: var(--m3e-on-secondary-container);
+    background: var(--m3e-secondary-container);
+    border: none;
+    border-radius: var(--m3e-r-md);
+    box-shadow: inset 0 0 0 999px color-mix(in srgb, currentColor var(--m3e-sl), transparent);
+}
+
+body .casino-bet-quick:hover:not(:disabled) {
+    background: var(--m3e-secondary-container);
+    color: var(--m3e-on-secondary-container);
+    border-radius: var(--m3e-r-full);
+    transform: none;
+}
+
+body .casino-bet-quick:active:not(:disabled) {
+    border-radius: var(--m3e-r-sm);
+    transform: scale(0.93);
+}
+
+body .casino-bet-quick:disabled {
+    opacity: 0.38;
+}
+
+body .casino-info {
+    color: var(--m3e-on-surface-variant);
+}
+
+body .casino-spin-btn {
+    height: 64px;
+    padding: 0;
+    font-family: var(--m3e-font);
+    font-size: 1.15rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-shadow: none;
+    color: var(--m3e-on-primary);
+    background: var(--m3e-primary);
+    border: none;
+    border-radius: var(--m3e-r-xl);
+    box-shadow:
+        inset 0 0 0 999px color-mix(in srgb, currentColor var(--m3e-sl), transparent),
+        var(--m3e-e2);
+    filter: none;
+}
+
+body .casino-spin-btn:hover:not(:disabled) {
+    filter: none;
+    transform: translateY(-2px);
+    border-radius: var(--m3e-r-full);
+    box-shadow:
+        inset 0 0 0 999px color-mix(in srgb, currentColor var(--m3e-sl), transparent),
+        var(--m3e-e3);
+}
+
+body .casino-spin-btn:active:not(:disabled) {
+    transform: scale(0.97);
+    border-radius: var(--m3e-r-md);
+    box-shadow:
+        inset 0 0 0 999px color-mix(in srgb, currentColor var(--m3e-sl), transparent),
+        var(--m3e-e1);
+}
+
+body .casino-spin-btn:disabled {
+    background: color-mix(in srgb, var(--m3e-on-surface) 12%, transparent);
+    color: color-mix(in srgb, var(--m3e-on-surface) 38%, transparent);
+    box-shadow: none;
+    opacity: 1;
+}
+
+body .casino-result {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    font-weight: 600;
+    color: var(--m3e-on-surface-variant);
+    border-radius: var(--m3e-r-full);
+    padding: 0 1rem;
+}
+
+body .casino-result.win {
+    color: var(--m3e-on-success-container);
+    background: var(--m3e-success-container);
+    text-shadow: none;
+    animation: m3ePopIn 500ms var(--m3e-spring-bouncy) both;
+}
+
+body .casino-result.lose {
+    color: var(--m3e-on-error-container);
+    background: var(--m3e-error-container);
+    text-shadow: none;
+    animation: m3ePopIn 420ms var(--m3e-spring-spatial) both;
+}
+
+/* ---------- 10. Открытие кейса ---------- */
+body .case-popup {
+    background: color-mix(in oklab, var(--m3e-primary) 14%, var(--m3e-case-bg));
+    -webkit-backdrop-filter: blur(6px);
+    backdrop-filter: blur(6px);
+}
+
+body .case-roulette {
+    background: color-mix(in oklab, var(--m3e-primary) 8%, var(--m3e-case-bg));
+    border: none;
+    box-shadow: none;
+    border-radius: var(--m3e-r-xxl);
+    width: min(100%, 1400px);
+}
+
+body .case-roulette::before {
+    background: linear-gradient(90deg, color-mix(in oklab, var(--m3e-primary) 8%, var(--m3e-case-bg)) 0%, transparent 100%);
+}
+
+body .case-roulette::after {
+    background: linear-gradient(270deg, color-mix(in oklab, var(--m3e-primary) 8%, var(--m3e-case-bg)) 0%, transparent 100%);
+}
+
+body .case-pointer {
+    width: 4px;
+    background: var(--m3e-primary);
+    border-radius: var(--m3e-r-full);
+    box-shadow: 0 0 20px color-mix(in srgb, var(--m3e-primary) 80%, transparent);
+}
+
+body .case-pointer::before {
+    border-top-color: var(--m3e-primary);
+}
+
+body .case-pointer::after {
+    border-bottom-color: var(--m3e-primary);
+}
+
+body .case-card {
+    border-radius: var(--m3e-r-xl);
+    border-width: 0;
+}
+
+body .case-card.winner {
+    animation: m3eWin 800ms var(--m3e-spring-bouncy) 2;
+}
+
+body .case-card-amount {
+    font-family: var(--m3e-font);
+    font-variant-numeric: tabular-nums;
+}
+
+body .case-hint {
+    color: rgba(255, 255, 255, 0.72);
+    font-weight: 500;
+}
+
+/* ---------- 11. Уведомления → Snackbar ---------- */
+body .notification,
+body .sound-notification,
+body .auto-load-notification {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    font-family: var(--m3e-font);
+    font-weight: 500;
+    font-size: 0.95rem;
+    padding: 0.9rem 1.25rem !important;
+    border-radius: var(--m3e-r-lg) !important;
+    background: var(--m3e-inverse-surface) !important;
+    color: var(--m3e-inverse-on-surface) !important;
+    box-shadow: var(--m3e-e3);
+    max-width: min(92vw, 440px);
+}
+
+body .notification.success,
+body .sound-notification.success {
+    background: var(--m3e-success-container) !important;
+    color: var(--m3e-on-success-container) !important;
+}
+
+body .notification.error,
+body .sound-notification.error {
+    background: var(--m3e-error-container) !important;
+    color: var(--m3e-on-error-container) !important;
+}
+
+body .notification.info,
+body .sound-notification.info {
+    background: var(--m3e-inverse-surface) !important;
+    color: var(--m3e-inverse-on-surface) !important;
+}
+
+/* ---------- 12. Адаптив ---------- */
+@media (max-width: 768px) {
+    body .header {
+        top: 1rem;
+        left: 1rem;
+    }
+
+    body .counter {
+        padding: 0.65rem 1.4rem;
+        border-radius: var(--m3e-r-xl) var(--m3e-r-xl) var(--m3e-r-xl) var(--m3e-r-sm);
+    }
+
+    body .icon-btn {
+        width: 48px;
+        height: 48px;
+        border-radius: 16px;
+    }
+
+    body .icon-btn .material-symbols-rounded {
+        font-size: 24px;
+    }
+
+    body .store-popup .popup-content,
+    body .skins-popup .popup-content,
+    body .settings-popup .popup-content,
+    body .inventory-popup .popup-content,
+    body .casino-popup .popup-content {
+        border-radius: var(--m3e-r-xl);
+    }
+
+    body .store-popup .popup-header h2,
+    body .skins-popup .popup-header h2,
+    body .settings-popup .popup-header h2,
+    body .inventory-popup .popup-header h2,
+    body .casino-popup .popup-header h2 {
+        font-size: 1.4rem;
+    }
+
+    body .store-content,
+    body .skins-content,
+    body .inventory-content,
+    body .settings-content {
+        padding-inline: 1rem;
+    }
+
+    body .settings-tabs {
+        padding-inline: 1rem;
+    }
+}
+
+/* ---------- 13. Отключение анимаций ---------- */
+.no-animations .click-area::before,
+.no-animations .confirmation-icon,
+.no-animations .m3e-ripple {
+    animation: none !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .click-area::before,
+    .confirmation-icon,
+    .m3e-ripple {
+        animation: none !important;
+    }
+
+    body .store-item,
+    body .skin-card,
+    body .inventory-item,
+    body .setting-category,
+    body .auto-load-item {
+        animation: none !important;
+    }
+}
+
+/* Блок акцентного цвета / выбор фона — без «старой» полосы слева */
+body .accent-color-selection,
+body .color-picker-container,
+body .custom-gradient-container {
+    background: var(--m3e-sc);
+    border: none;
+    border-left: none;
+    border-radius: var(--m3e-r-xl);
+}
+
+/* ==========================================================================
+   Правка 2: форма не меняется при наведении/нажатии, единый фон у текстовых
+   блоков, отступы и обводки в настройках, без линии в казино
+   ========================================================================== */
+
+/* --- 1. Кнопки: всегда «таблетка»/круг, без смены формы --- */
+body .icon-btn,
+body .icon-btn:hover,
+body .icon-btn:active,
+body .icon-btn:focus-visible,
+body .store-popup .close-btn,
+body .store-popup .close-btn:hover,
+body .store-popup .close-btn:active,
+body .skins-popup .close-btn,
+body .skins-popup .close-btn:hover,
+body .skins-popup .close-btn:active,
+body .settings-popup .close-btn,
+body .settings-popup .close-btn:hover,
+body .settings-popup .close-btn:active,
+body .inventory-popup .close-btn,
+body .inventory-popup .close-btn:hover,
+body .inventory-popup .close-btn:active,
+body .casino-popup .close-btn,
+body .casino-popup .close-btn:hover:not(:disabled),
+body .casino-popup .close-btn:active:not(:disabled),
+body .buy-btn,
+body .buy-btn:hover:not(:disabled),
+body .buy-btn:active:not(:disabled),
+body .upgrade-btn,
+body .upgrade-btn:hover:not(:disabled),
+body .upgrade-btn:active:not(:disabled),
+body .case-btn,
+body .case-btn:hover:not(:disabled),
+body .case-btn:active:not(:disabled),
+body .tab-btn,
+body .tab-btn:hover,
+body .tab-btn:active,
+body .tab-btn.active,
+body .danger-btn,
+body .danger-btn:hover,
+body .danger-btn:active,
+body .link-btn,
+body .link-btn:hover,
+body .link-btn:active,
+body .mod-btn,
+body .mod-btn:hover:not(:disabled),
+body .mod-btn:active:not(:disabled),
+body .example-btn,
+body .example-btn:hover,
+body .confirm-btn,
+body .confirm-btn:hover,
+body .confirm-btn:active,
+body .color-picker-confirm,
+body .color-picker-confirm:hover,
+body .color-picker-confirm:active,
+body .color-picker-cancel,
+body .color-picker-cancel:hover,
+body .color-picker-cancel:active,
+body .casino-spin-btn,
+body .casino-spin-btn:hover:not(:disabled),
+body .casino-spin-btn:active:not(:disabled),
+body .casino-bet-quick,
+body .casino-bet-quick:hover:not(:disabled),
+body .casino-bet-quick:active:not(:disabled),
+body .auto-load-remove,
+body .auto-load-remove:hover {
+    border-radius: var(--m3e-r-full) !important;
+}
+
+body .inventory-menu-btn,
+body .inventory-menu-btn:hover,
+body .inventory-menu-btn:active {
+    border-radius: var(--m3e-r-md) !important;
+}
+
+/* Нажатие — только лёгкое «вдавливание» без смены формы */
+body .icon-btn:active,
+body .buy-btn:active:not(:disabled),
+body .upgrade-btn:active:not(:disabled),
+body .case-btn:active:not(:disabled),
+body .casino-bet-quick:active:not(:disabled),
+body .casino-spin-btn:active:not(:disabled) {
+    transform: scale(0.95);
+}
+
+body .icon-btn:hover {
+    transform: translateY(-2px);
+}
+
+/* --- 2. Карточки и превью: форма постоянная --- */
+body .store-item,
+body .store-item:hover,
+body .store-item:active,
+body .skin-card,
+body .skin-card:hover,
+body .skin-card:active,
+body .inventory-item,
+body .inventory-item:hover,
+body .inventory-item:active {
+    border-radius: var(--m3e-r-xl) !important;
+}
+
+body .store-item:active,
+body .skin-card:active,
+body .inventory-item:active {
+    transform: scale(0.98);
+}
+
+body .store-item-preview,
+body .skin-preview,
+body .inventory-item-preview,
+body .store-item:hover .store-item-preview,
+body .skin-card:hover .skin-preview,
+body .inventory-item:hover .inventory-item-preview {
+    border-radius: var(--m3e-r-xl) !important;
+}
+
+body .counter,
+body .counter:hover {
+    border-radius: var(--m3e-r-xxl);
+}
+
+body .color-preview,
+body .color-preview:hover,
+body .gradient-color-preview,
+body .gradient-color-preview:hover,
+body .accent-color-preview,
+body .accent-color-preview:hover {
+    border-radius: var(--m3e-r-xl);
+    transform: none;
+}
+
+body .accent-preset,
+body .accent-preset:hover,
+body .accent-preset.active {
+    border-radius: var(--m3e-r-full);
+}
+
+body .casino-bet-input,
+body .casino-bet-input:focus,
+body .background-select,
+body .background-select:focus,
+body .sound-select,
+body .sound-select:focus {
+    border-radius: var(--m3e-r-md);
+}
+
+/* --- 3. Текст и его фон — один тон с карточкой, без «плашек» --- */
+body .color-picker-container,
+body .custom-gradient-container,
+body .accent-color-selection,
+body .auto-load-container,
+body .auto-load-list,
+body .gradient-color-item,
+body .metadata-display {
+    background: transparent;
+    border: 1px solid var(--m3e-outline-variant);
+    border-radius: var(--m3e-r-xl);
+}
+
+body .auto-load-list:empty {
+    display: none;
+}
+
+body .color-picker-input,
+body .color-preview-input,
+body .gradient-color-input,
+body .accent-color-preview-input {
+    background: transparent;
+    color: var(--m3e-on-surface);
+}
+
+body .auto-load-item {
+    background: transparent;
+    border: 1px solid var(--m3e-outline-variant);
+}
+
+/* --- 4. Настройки: отступы сверху и обводки --- */
+body .setting-category {
+    border: 1px solid var(--m3e-outline-variant);
+    padding: 1.5rem 1.25rem 1.25rem;
+}
+
+body .category-title {
+    margin-bottom: 0.75rem;
+}
+
+body .setting-group {
+    padding-top: 0.75rem;
+}
+
+body .setting-item {
+    margin-top: 0.5rem;
+    padding: 0.9rem 1rem;
+    border: 1px solid var(--m3e-outline-variant);
+}
+
+body .setting-item:first-child {
+    margin-top: 0.5rem;
+}
+
+body .setting-item:hover {
+    border-color: var(--m3e-outline);
+}
+
+body .background-selection,
+body .sound-selection {
+    margin-top: 1rem;
+}
+
+body .accent-color-selection,
+body .color-picker-container,
+body .custom-gradient-container {
+    margin-top: 1rem;
+    padding: 1.1rem;
+}
+
+body .link-btn,
+body .danger-btn {
+    border: 1px solid var(--m3e-outline-variant);
+}
+
+body .mod-warning {
+    border: 1px solid color-mix(in srgb, var(--m3e-error) 45%, transparent);
+}
+
+body .tab-btn.active {
+    border: 1px solid transparent;
+}
+
+/* --- 5. Казино: убираем линию между слотами --- */
+body .casino-slots::after {
+    display: none !important;
+}
+
+/* Стартовый градиент (до применения настроек JS) — без зелёного */
+body {
+    background-image: linear-gradient(
+        -45deg,
+        #6750a4,
+        #b583da,
+        #e67bd6,
+        #ff8da1,
+        #4a3a8f,
+        #9a67ea,
+        #8e24aa,
+        #ba68c8
+    );
+}
+
+/* ==========================================================================
+   14. Правки: гардероб, настройки (отступы сверху + анимации)
+   ========================================================================== */
+
+/* --- Гардероб: карточка не «мигает» и не пропадает при быстрых кликах ---
+   Классы skin-selected / success-animation раньше подменяли анимацию появления
+   (m3eRise) на другую, а после их снятия m3eRise стартовала заново с opacity: 0.
+   Теперь анимация карточки при этих классах остаётся той же — без перезапуска. */
+body .skin-card.skin-selected,
+body .skin-card.success-animation {
+    animation: m3eRise var(--m3e-t-slow) var(--m3e-spring-spatial) both;
+    animation-delay: calc(var(--i, 0) * 45ms);
+}
+
+/* --- Настройки: отступы сверху у переключателей вкладок --- */
+body .settings-tabs {
+    padding-top: 1rem;
+    padding-bottom: 0.9rem;
+    margin-top: 0.25rem;
+    scrollbar-width: none;
+}
+
+body .settings-tabs::-webkit-scrollbar {
+    display: none;
+}
+
+body .settings-content {
+    padding-top: 0.75rem;
+}
+
+/* --- Настройки: анимации --- */
+@keyframes m3eTabIn {
+    from {
+        opacity: 0;
+        transform: translateY(-14px) scale(0.85);
+    }
+    to {
+        opacity: 1;
+        transform: none;
+    }
+}
+
+@keyframes m3eTabPop {
+    0% {
+        transform: scale(0.88);
+    }
+    55% {
+        transform: scale(1.07);
+    }
+    100% {
+        transform: scale(1);
+    }
+}
+
+@keyframes m3eItemIn {
+    from {
+        opacity: 0;
+        transform: translateX(-18px);
+    }
+    to {
+        opacity: 1;
+        transform: none;
+    }
+}
+
+@keyframes m3eTitleIcon {
+    0% {
+        transform: scale(0.4) rotate(-40deg);
+        opacity: 0;
+    }
+    60% {
+        transform: scale(1.2) rotate(8deg);
+        opacity: 1;
+    }
+    100% {
+        transform: none;
+        opacity: 1;
+    }
+}
+
+/* Вкладки выезжают по очереди при открытии настроек.
+   У активной вкладки к входной анимации добавляется пружинка — имя m3eTabIn
+   в списке остаётся тем же, поэтому у остальных вкладок вход не перезапускается. */
+body .settings-popup.active .tab-btn {
+    animation: m3eTabIn var(--m3e-t) var(--m3e-spring-spatial) backwards;
+    animation-delay: var(--d, 0ms);
+}
+body .settings-popup.active .tab-btn.active {
+    animation:
+        m3eTabIn var(--m3e-t) var(--m3e-spring-spatial) backwards,
+        m3eTabPop var(--m3e-t-fast) var(--m3e-spring-bouncy);
+    animation-delay: var(--d, 0ms), 0ms;
+}
+body .settings-popup .tab-btn:nth-child(1) { --d: 80ms; }
+body .settings-popup .tab-btn:nth-child(2) { --d: 130ms; }
+body .settings-popup .tab-btn:nth-child(3) { --d: 180ms; }
+body .settings-popup .tab-btn:nth-child(4) { --d: 230ms; }
+body .settings-popup .tab-btn:nth-child(5) { --d: 280ms; }
+body .settings-popup .tab-btn:nth-child(6) { --d: 330ms; }
+body .settings-popup .tab-btn:nth-child(7) { --d: 380ms; }
+
+/* Строки настроек появляются каскадом (при открытии и при смене вкладки) */
+body .setting-category .setting-item,
+body .setting-category .background-selection,
+body .setting-category .sound-selection,
+body .setting-category .accent-color-selection {
+    animation: m3eItemIn var(--m3e-t) var(--m3e-spring-spatial) backwards;
+}
+body .setting-category .setting-item:nth-child(1) { animation-delay: 120ms; }
+body .setting-category .setting-item:nth-child(2) { animation-delay: 170ms; }
+body .setting-category .setting-item:nth-child(3) { animation-delay: 220ms; }
+body .setting-category .setting-item:nth-child(4) { animation-delay: 270ms; }
+body .setting-category .setting-item:nth-child(5) { animation-delay: 320ms; }
+body .setting-category .setting-item:nth-child(n + 6) { animation-delay: 370ms; }
+body .setting-category .background-selection,
+body .setting-category .sound-selection,
+body .setting-category .accent-color-selection {
+    animation-delay: 200ms;
+}
+
+/* Иконка заголовка категории «вылетает» с поворотом */
+body .category-title .material-symbols-rounded {
+    animation: m3eTitleIcon var(--m3e-t-slow) var(--m3e-spring-bouncy) 100ms backwards;
+}
+
+/* Лёгкий сдвиг строки при наведении */
+body .setting-item {
+    transition:
+        transform var(--m3e-t-fast) var(--m3e-spring-spatial),
+        background-color var(--m3e-t-fx) linear,
+        border-color var(--m3e-t-fx) linear;
+}
+body .setting-item:hover {
+    transform: translateX(4px);
+}
+
+/* Отключение анимаций */
+.no-animations .settings-popup .tab-btn,
+.no-animations .setting-category .setting-item,
+.no-animations .setting-category .background-selection,
+.no-animations .setting-category .sound-selection,
+.no-animations .setting-category .accent-color-selection,
+.no-animations .category-title .material-symbols-rounded {
+    animation: none !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    body .settings-popup .tab-btn,
+    body .setting-category .setting-item,
+    body .setting-category .background-selection,
+    body .setting-category .sound-selection,
+    body .setting-category .accent-color-selection,
+    body .category-title .material-symbols-rounded {
+        animation: none !important;
+    }
+}
+
+/* ==========================================================================
+   15. Магазин без «полного обновления», фон кейса как у остальных окон,
+       стеклянная рулетка
+   ========================================================================== */
+
+/* --- Магазин: после покупки карточки перерисовываются тихо, без повтора анимации --- */
+body .store-grid.store-refresh .store-item {
+    animation: none;
+}
+
+/* --- Окно открытия кейса: тот же фон, что у магазина / инвентаря / настроек --- */
+body .case-popup {
+    background: var(--m3e-scrim);
+    -webkit-backdrop-filter: blur(14px) saturate(1.2);
+    backdrop-filter: blur(14px) saturate(1.2);
+}
+
+/* --- Рулетка как стекло --- */
+body .case-roulette {
+    background: linear-gradient(
+        180deg,
+        rgba(255, 255, 255, 0.22) 0%,
+        rgba(255, 255, 255, 0.07) 38%,
+        rgba(255, 255, 255, 0.04) 62%,
+        rgba(255, 255, 255, 0.14) 100%
+    );
+    -webkit-backdrop-filter: blur(18px) saturate(1.6);
+    backdrop-filter: blur(18px) saturate(1.6);
+    border: 1px solid rgba(255, 255, 255, 0.34);
+    border-radius: var(--m3e-r-xxl);
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.55),
+        inset 0 -1px 0 rgba(255, 255, 255, 0.12),
+        inset 0 0 36px rgba(255, 255, 255, 0.06),
+        0 18px 50px rgba(0, 0, 0, 0.28);
+}
+
+/* блик-«отражение» по верхней половине стекла (поверх карточек, не мешает кликам) */
+body .case-roulette::before,
+body .case-roulette::after {
+    pointer-events: none;
+}
+
+/* края рулетки: лёгкое матовое затухание вместо тёмных плашек */
+body .case-roulette::before {
+    background: linear-gradient(90deg, rgba(255, 255, 255, 0.16) 0%, transparent 100%);
+}
+
+body .case-roulette::after {
+    background: linear-gradient(270deg, rgba(255, 255, 255, 0.16) 0%, transparent 100%);
+}
+
+/* карточки внутри — прозрачные, цвет редкости просвечивает */
+body .case-card {
+    background: linear-gradient(
+        180deg,
+        rgba(255, 255, 255, 0.16) 0%,
+        color-mix(in srgb, var(--rc, #b0c3d9) 34%, transparent) 100%
+    );
+    border-bottom: 4px solid color-mix(in srgb, var(--rc, #b0c3d9) 85%, transparent);
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.35),
+        0 4px 18px rgba(0, 0, 0, 0.12);
+}
+
+body .case-card.winner {
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.5),
+        0 0 40px color-mix(in srgb, var(--rc, #fff) 70%, transparent),
+        inset 0 0 28px color-mix(in srgb, var(--rc, #fff) 35%, transparent);
+}
+
+/* указатель — стеклянная линия */
+body .case-pointer {
+    background: rgba(255, 255, 255, 0.85);
+    box-shadow:
+        0 0 14px rgba(255, 255, 255, 0.7),
+        0 0 28px color-mix(in srgb, var(--m3e-primary) 70%, transparent);
+}
+
+body .case-pointer::before {
+    border-top-color: rgba(255, 255, 255, 0.9);
+}
+
+body .case-pointer::after {
+    border-bottom-color: rgba(255, 255, 255, 0.9);
+}
+
+/* ==========================================================================
+   16. Вкладки настроек — просто иконки с отступами, «Куплен» с иконкой-галочкой,
+       подсказка в инвентаре без тёмной плашки
+   ========================================================================== */
+
+/* --- Вкладки настроек: иконки без кнопок --- */
+body .settings-tabs {
+    gap: 1rem;
+    padding-inline: 1.5rem;
+    align-items: center;
+}
+
+body .settings-tabs .tab-btn,
+body .settings-tabs .tab-btn:hover,
+body .settings-tabs .tab-btn:active,
+body .settings-tabs .tab-btn.active {
+    position: relative;
+    flex: none;
+    width: 48px;
+    height: 48px;
+    min-width: 48px;
+    padding: 0;
+    gap: 0;
+    justify-content: center;
+    background: transparent;
+    border: none;
+    border-radius: var(--m3e-r-full);
+    box-shadow: none;
+    color: var(--m3e-on-surface-variant);
+    transform: none;
+}
+
+body .settings-tabs .tab-btn:hover {
+    color: var(--m3e-on-surface);
+    background: color-mix(in srgb, var(--m3e-on-surface) 8%, transparent);
+}
+
+body .settings-tabs .tab-btn.active {
+    color: var(--m3e-primary);
+    background: transparent;
+}
+
+/* текст убран — остаётся только иконка */
+body .settings-tabs .tab-btn .tab-text {
+    display: none;
+}
+
+body .settings-tabs .tab-btn .tab-emoji .material-symbols-rounded {
+    font-size: 28px;
+}
+
+/* индикатор активной вкладки */
+body .settings-tabs .tab-btn::after {
+    content: "";
+    position: absolute;
+    left: 50%;
+    bottom: 3px;
+    width: 18px;
+    height: 3px;
+    margin-left: -9px;
+    border-radius: var(--m3e-r-full);
+    background: var(--m3e-primary);
+    transform: scaleX(0);
+    transition: transform var(--m3e-t-fast) var(--m3e-spring-bouncy);
+}
+
+body .settings-tabs .tab-btn.active::after {
+    transform: scaleX(1);
+}
+
+/* --- «Куплен»: галочка как иконка --- */
+body .store-item.owned::after {
+    content: none;
+    display: none;
+}
+
+body .store-item .owned-badge {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    z-index: 2;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.3rem 0.85rem 0.3rem 0.55rem;
+    border-radius: var(--m3e-r-full);
+    background: var(--m3e-success);
+    color: var(--m3e-on-success);
+    font-family: var(--m3e-font);
+    font-size: 0.8rem;
+    font-weight: 600;
+    box-shadow: var(--m3e-e1);
+    animation: m3ePopIn 500ms var(--m3e-spring-bouncy) both;
+}
+
+body .store-grid.store-refresh .store-item .owned-badge {
+    animation: m3ePopIn 500ms var(--m3e-spring-bouncy) both;
+}
+
+body .owned-badge .material-symbols-rounded,
+body .buy-btn.owned .material-symbols-rounded {
+    font-size: 18px;
+    font-variation-settings:
+        "FILL" 1,
+        "wght" 600,
+        "GRAD" 0,
+        "opsz" 20;
+}
+
+body .buy-btn.owned {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.35rem;
+}
+
+/* --- Инвентарь: подсказка без тёмного фона --- */
+body .inventory-hint {
+    background: transparent;
+    padding-inline: 0;
+}
+
+.no-animations .owned-badge {
+    animation: none !important;
+}
+
+/* ==========================================================================
+   17. Диалоги (appDialog: alert / confirm / prompt) и уведомления
+   ========================================================================== */
+
+/* окно выше всех остальных, в том числе окна подтверждения кода */
+body .confirmation-modal.app-dialog {
+    z-index: 3000;
+}
+
+/* обычные диалоги — нейтральная иконка; опасные (danger) — красная, как раньше */
+body .app-dialog .confirmation-icon {
+    background: var(--m3e-primary-container);
+    color: var(--m3e-on-primary-container);
+}
+
+body .app-dialog.danger .confirmation-icon {
+    background: var(--m3e-error-container);
+    color: var(--m3e-on-error-container);
+}
+
+body .app-dialog.danger .confirm-yes,
+body .app-dialog.danger .confirm-yes:hover {
+    background: var(--m3e-error);
+    color: var(--m3e-on-error, #ffffff);
+}
+
+body .app-dialog .confirmation-message {
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+body .app-dialog .confirmation-content {
+    max-width: 440px;
+}
+
+body .app-dialog-input {
+    width: 100%;
+    box-sizing: border-box;
+    height: 52px;
+    margin: -0.75rem 0 1.5rem;
+    padding: 0 1rem;
+    font-family: var(--m3e-font);
+    font-size: 1rem;
+    color: var(--m3e-on-surface);
+    background: var(--m3e-sc-highest);
+    border: 1px solid var(--m3e-outline);
+    border-radius: var(--m3e-r-lg);
+    outline: none;
+    transition:
+        border-color var(--m3e-t-fx) linear,
+        box-shadow var(--m3e-t-fx) linear;
+}
+
+body .app-dialog-input:focus {
+    border-color: var(--m3e-primary);
+    box-shadow: 0 0 0 1px var(--m3e-primary);
+}
+
+/* закрытие: плавное исчезновение */
+body .confirmation-modal.app-dialog.closing {
+    opacity: 0;
+    transition: opacity 200ms linear;
+}
+
+body .confirmation-modal.app-dialog.closing .confirmation-content {
+    animation: m3ePopOut 200ms var(--m3e-emphasized) forwards;
+}
+
+.no-animations .app-dialog,
+.no-animations .app-dialog .confirmation-content {
+    animation: none !important;
+    transition: none !important;
+}
+
+/* Уведомления (снекбары) не перехватывают клики — раньше они на ~3 секунды
+   перекрывали кнопку закрытия окон в правом верхнем углу */
+body .notification,
+body .sound-notification,
+body .auto-load-notification {
+    pointer-events: none;
+}
+
