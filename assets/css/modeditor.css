@@ -210,3 +210,48 @@
         display: none;
     }
 }
+
+/* ---------- Мобильная версия: редактор выезжает снизу и уезжает обратно вниз ---------- */
+@media (max-width: 768px) {
+    .mod-editor-overlay {
+        align-items: flex-end;
+        /* ждём, пока окно уедет вниз, и только потом прячем */
+        transition:
+            background 0.32s ease,
+            backdrop-filter 0.32s ease,
+            visibility 0s linear 0.4s;
+    }
+
+    .mod-editor-overlay.active {
+        transition:
+            background 0.3s ease,
+            backdrop-filter 0.3s ease,
+            visibility 0s;
+    }
+
+    /* закрытие: уезжает вниз */
+    .mod-editor-window {
+        opacity: 1;
+        transform: translateY(100%);
+        will-change: transform;
+        transition: transform 0.34s cubic-bezier(0.3, 0, 0.8, 0.15);
+    }
+
+    /* открытие: выезжает снизу без «пружинки» — чтобы снизу не оставалось щели */
+    .mod-editor-overlay.active .mod-editor-window {
+        opacity: 1;
+        transform: none;
+        transition: transform 0.42s cubic-bezier(0.2, 0, 0, 1);
+    }
+
+    /* шапка и текст едут вместе с окном, а не проявляются отдельно */
+    .mod-editor-header,
+    .mod-editor-body,
+    .mod-editor-overlay.active .mod-editor-header,
+    .mod-editor-overlay.active .mod-editor-body {
+        opacity: 1;
+        transform: none;
+        transition: none;
+    }
+}
+

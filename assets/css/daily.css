@@ -13,20 +13,43 @@
 .icon-btn#dailyBtn.daily-ready::after {
     content: "";
     position: absolute;
-    top: 6px;
-    right: 6px;
+    top: 9px;
+    right: 9px;
     width: 12px;
     height: 12px;
     border-radius: 50%;
-    background: #ff3d71;
+    background: #ff1f1f;
     box-shadow:
         0 0 0 2px var(--m3e-secondary-container, #4a4458),
-        0 0 10px rgba(255, 61, 113, 0.8);
+        0 0 6px rgba(255, 31, 31, 0.8);
     animation: dailyDotPulse 1.6s ease-in-out infinite;
 }
 
 .icon-btn#dailyBtn.daily-ready .material-symbols-rounded {
     animation: dailyGiftWiggle 2.8s ease-in-out infinite;
+}
+
+/* Мобильная панель: точка целиком внутри кнопки (у кнопки overflow:hidden,
+   поэтому всё, что выходит за её край, обрезалось) */
+@media (max-width: 768px) {
+    .icon-btn#dailyBtn.daily-ready::after {
+        top: 3px;
+        right: auto;
+        left: calc(50% + 5px);
+        width: 10px;
+        height: 10px;
+        box-shadow: 0 0 0 2px var(--m3e-sc-high, #2b2930);
+    }
+
+    .icon-btn#dailyBtn.daily-ready.nav-active::after {
+        box-shadow: 0 0 0 2px var(--m3e-secondary-container, #4a4458);
+    }
+}
+
+@media (max-width: 340px) {
+    .icon-btn#dailyBtn.daily-ready::after {
+        left: calc(50% + 3px);
+    }
 }
 
 @keyframes dailyDotPulse {
@@ -143,6 +166,8 @@
     background: var(--m3e-sc-highest, rgba(255, 255, 255, 0.08));
     color: var(--m3e-on-surface, #fff);
     border: 2px solid transparent;
+    background-origin: border-box;
+    background-clip: border-box;
     box-sizing: border-box;
     text-align: center;
     transition:
@@ -242,6 +267,12 @@
     box-shadow: 0 0 0 4px
         color-mix(in srgb, var(--m3e-primary, var(--accent-color, #6750a4)) 25%, transparent);
     animation: dailyTodayGlow 1.8s ease-in-out infinite;
+}
+
+/* Широкая карточка 7-го дня не масштабируется: при дробном scale рамка
+   ложилась на полпикселя и выглядела кривой */
+.daily-card.big.today {
+    transform: none;
 }
 
 .daily-card.just-claimed {

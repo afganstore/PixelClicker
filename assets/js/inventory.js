@@ -99,6 +99,8 @@ class InventoryManager {
     if (this.isClosing) return;
     this.popup.classList.add("active");
     document.body.style.overflow = "hidden";
+    // При открытии рисуем с нуля, чтобы карточки красиво появились
+    if (this.grid) this.grid.innerHTML = "";
     this.render();
   }
 
@@ -152,58 +154,129 @@ class InventoryManager {
   }
 
   // ---------- Отрисовка ----------
+  // Описание карточки: превью, значок и подпись
+  describe(entry) {
+    const { item, kind } = entry;
+    let preview = "";
+    let badgeText = "";
+    let badgeCls = "";
+    let sub = "";
+
+    if (kind === "upgrade") {
+      const iconHtml = item.previewIcon
+        ? `<span class="material-symbols-rounded">${item.previewIcon}</span>`
+        : `+${item.multiplier}`;
+      preview = `<div class="inventory-upgrade-preview">${iconHtml}</div>`;
+      badgeText = `Ур. ${entry.level}`;
+      const sm2 = window.storeManager;
+      sub =
+        sm2 && sm2.formatUpgradeBonus
+          ? `Бонус: ${sm2.formatUpgradeBonus(item, entry.level)}`
+          : `Бонус: +${entry.level * item.multiplier} за клик`;
+    } else {
+      preview = `<img src="assets/images/${item.image}" alt="${item.name}" draggable="false" ${item.imageFilter ? `style="filter: ${item.imageFilter}"` : ""} onerror="this.src='assets/images/p6.png'">`;
+      if (kind === "case") {
+        badgeText = `×${entry.count}`;
+        sub = "Нажми, чтобы открыть";
+      } else if (entry.selected) {
+        badgeText = "Выбран";
+        badgeCls = "selected";
+        sub = "Скин";
+      } else {
+        sub = "Скин";
+      }
+    }
+    return { preview, badgeText, badgeCls, sub };
+  }
+
+  entrySig(entry) {
+    const d = this.describe(entry);
+    return [d.badgeText, d.badgeCls, d.sub].join("|");
+  }
+
+  createEntryEl(entry) {
+    const { item, kind } = entry;
+    const d = this.describe(entry);
+    const el = document.createElement("div");
+    el.className = `inventory-item inv-${kind}`;
+    el.dataset.kind = kind;
+    el.dataset.id = item.id;
+    el.innerHTML = `
+      <div class="inventory-item-preview">${d.preview}</div>
+      <div class="inventory-item-name">${item.name}</div>
+      <div class="inventory-item-sub"></div>
+    `;
+    this.patchEntryEl(el, entry);
+    return el;
+  }
+
+  // Обновляет только изменившееся (значок и подпись), сама карточка
+  // остаётся на месте, поэтому анимация появления не запускается заново
+  patchEntryEl(el, entry) {
+    const d = this.describe(entry);
+    const subEl = el.querySelector(".inventory-item-sub");
+    if (subEl && subEl.textContent !== d.sub) subEl.textContent = d.sub;
+
+    const prev = el.querySelector(".inventory-item-preview");
+    let badge = el.querySelector(".inventory-badge");
+    if (d.badgeText) {
+      if (!badge) {
+        badge = document.createElement("span");
+        prev.appendChild(badge);
+      }
+      badge.className = `inventory-badge${d.badgeCls ? " " + d.badgeCls : ""}`;
+      if (badge.textContent !== d.badgeText) badge.textContent = d.badgeText;
+    } else if (badge) {
+      badge.remove();
+    }
+    el.dataset.sig = this.entrySig(entry);
+  }
+
+  // Полная перерисовка только при открытии окна; дальше — точечные правки
   render() {
     if (!this.grid) return;
-    this.grid.innerHTML = "";
 
     const entries = this.getEntries();
+    const emptyEl = this.grid.querySelector(".inventory-empty");
 
     if (entries.length === 0) {
-      this.grid.innerHTML = '<div class="inventory-empty">Инвентарь пуст</div>';
+      Array.from(this.grid.children).forEach((c) => {
+        if (c !== emptyEl) c.remove();
+      });
+      if (!emptyEl) {
+        this.grid.innerHTML = '<div class="inventory-empty">Инвентарь пуст</div>';
+      }
       return;
     }
+    if (emptyEl) emptyEl.remove();
 
+    const existing = new Map();
+    Array.from(this.grid.children).forEach((c) => {
+      if (c.dataset && c.dataset.kind) {
+        existing.set(`${c.dataset.kind}:${c.dataset.id}`, c);
+      }
+    });
+
+    let prev = null;
+    const keep = new Set();
     entries.forEach((entry) => {
-      const { item, kind } = entry;
-      const el = document.createElement("div");
-      el.className = `inventory-item inv-${kind}`;
-      el.dataset.kind = kind;
-      el.dataset.id = item.id;
+      const key = `${entry.kind}:${entry.item.id}`;
+      keep.add(key);
 
-      let preview = "";
-      let badge = "";
-      let sub = "";
-
-      if (kind === "upgrade") {
-        const iconHtml = item.previewIcon
-          ? `<span class="material-symbols-rounded">${item.previewIcon}</span>`
-          : `+${item.multiplier}`;
-        preview = `<div class="inventory-upgrade-preview">${iconHtml}</div>`;
-        badge = `<span class="inventory-badge">Ур. ${entry.level}</span>`;
-        const sm2 = window.storeManager;
-        sub =
-          sm2 && sm2.formatUpgradeBonus
-            ? `Бонус: ${sm2.formatUpgradeBonus(item, entry.level)}`
-            : `Бонус: +${entry.level * item.multiplier} за клик`;
-      } else {
-        preview = `<img src="assets/images/${item.image}" alt="${item.name}" draggable="false" ${item.imageFilter ? `style="filter: ${item.imageFilter}"` : ""} onerror="this.src='assets/images/p6.png'">`;
-        if (kind === "case") {
-          badge = `<span class="inventory-badge">×${entry.count}</span>`;
-          sub = "Нажми, чтобы открыть";
-        } else if (entry.selected) {
-          badge = `<span class="inventory-badge selected">Выбран</span>`;
-          sub = "Скин";
-        } else {
-          sub = "Скин";
-        }
+      let el = existing.get(key);
+      if (!el) {
+        el = this.createEntryEl(entry);
+      } else if (el.dataset.sig !== this.entrySig(entry)) {
+        this.patchEntryEl(el, entry);
       }
 
-      el.innerHTML = `
-        <div class="inventory-item-preview">${preview}${badge}</div>
-        <div class="inventory-item-name">${item.name}</div>
-        <div class="inventory-item-sub">${sub}</div>
-      `;
-      this.grid.appendChild(el);
+      const ref = prev ? prev.nextSibling : this.grid.firstChild;
+      if (el !== ref) this.grid.insertBefore(el, ref);
+      prev = el;
+    });
+
+    existing.forEach((el, key) => {
+      if (!keep.has(key)) el.remove();
     });
   }
 

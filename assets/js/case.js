@@ -4,6 +4,18 @@ class CaseManager {
     this.roulette = document.getElementById("caseRoulette");
     this.track = document.getElementById("caseTrack");
     this.hintEl = document.getElementById("caseHint");
+    this.titleEl = document.getElementById("caseTitle");
+    this.resultEl = document.getElementById("caseResult");
+
+    this.rarityNames = {
+      consumer: "Обычный",
+      industrial: "Необычный",
+      milspec: "Редкий",
+      restricted: "Эпический",
+      classified: "Мифический",
+      covert: "Легендарный",
+      gold: "Золотой",
+    };
 
     this.item = null; // текущий кейс из storeItems
     this.isSpinning = false;
@@ -17,8 +29,87 @@ class CaseManager {
 
     this.onClose = null; // колбэк после закрытия
 
+    this.anim = null; // Web Animation прокрутки ленты
+    this.jitterRatio = 0; // небольшой сдвиг внутри рамки (в долях шага)
+    this.finalOffset = null; // где лента остановилась (для пересчёта при ресайзе)
+    this.mobileMq = window.matchMedia("(max-width: 768px)");
+
     if (!this.popup) return;
     this.setupEventListeners();
+    this.setupResizeHandling();
+  }
+
+  // На мобильных рулетка вертикальная (карточки едут сверху вниз)
+  isVertical() {
+    return this.mobileMq.matches;
+  }
+
+  tf(offset) {
+    return this.isVertical()
+      ? `translateY(${-offset}px)`
+      : `translateX(${-offset}px)`;
+  }
+
+  // Смена размера окна / поворот экрана / переключение мобильного режима:
+  // пересчитываем смещение ленты, чтобы выигрышная карточка оставалась
+  // строго под указателем (раньше смещение считалось один раз в пикселях)
+  setupResizeHandling() {
+    let raf = 0;
+    const schedule = () => {
+      if (raf) return;
+      raf = requestAnimationFrame(() => {
+        raf = 0;
+        this.relayout();
+      });
+    };
+    window.addEventListener("resize", schedule);
+    window.addEventListener("orientationchange", schedule);
+    if (this.mobileMq.addEventListener) {
+      this.mobileMq.addEventListener("change", schedule);
+    }
+    if (window.ResizeObserver && this.roulette) {
+      new ResizeObserver(schedule).observe(this.roulette);
+    }
+    if (document.fonts && document.fonts.ready) {
+      document.fonts.ready.then(schedule);
+    }
+  }
+
+  endOffset() {
+    return this.offsetFor(
+      this.winnerIndex,
+      this.jitterRatio * this.getStep(),
+    );
+  }
+
+  keyframes() {
+    return [
+      { transform: this.tf(this.offsetFor(this.startIndex, 0)) },
+      { transform: this.tf(this.endOffset()) },
+    ];
+  }
+
+  relayout() {
+    if (!this.popup || !this.popup.classList.contains("active")) return;
+    if (!this.track || !this.track.children.length) return;
+    if (this.anim && this.isSpinning) {
+      // Прокрутка идёт: меняем только геометрию, прогресс (currentTime) сохраняется
+      try {
+        this.anim.effect.setKeyframes(this.keyframes());
+      } catch (e) {
+        /* ничего: лента доедет по старым ключевым кадрам */
+      }
+      return;
+    }
+    if (this.finalOffset !== null) {
+      // Остановились: заново ставим ленту на выигрышную карточку
+      this.finalOffset = this.endOffset();
+      this.track.style.transform = this.tf(this.finalOffset);
+    } else {
+      this.track.style.transform = this.tf(
+        this.offsetFor(this.startIndex, 0),
+      );
+    }
   }
 
   setupEventListeners() {
@@ -68,6 +159,7 @@ class CaseManager {
     const card = document.createElement("div");
     card.className = `case-card r-${drop.rarity}`;
     card.innerHTML = `
+      <div class="case-card-rarity">${this.rarityNames[drop.rarity] || ""}</div>
       <div class="coin coin-big"></div>
       <div class="case-card-amount">${this.fmt(drop.coins)}</div>
     `;
@@ -83,13 +175,16 @@ class CaseManager {
     const a = this.track.children[0];
     const b = this.track.children[1];
     if (!a || !b) return 200;
-    return b.offsetLeft - a.offsetLeft;
+    return this.isVertical()
+      ? b.offsetTop - a.offsetTop
+      : b.offsetLeft - a.offsetLeft;
   }
 
   // Смещение ленты, чтобы центр карточки index (+jitter) был под указателем
   offsetFor(index, jitter) {
     const step = this.getStep();
-    const center = this.roulette.clientWidth / 2;
+    const center =
+      (this.isVertical() ? this.roulette.clientHeight : this.roulette.clientWidth) / 2;
     return index * step + step / 2 + jitter - center;
   }
 
@@ -123,8 +218,27 @@ class CaseManager {
       clicker.saveCount();
     }
 
+    if (this.anim) {
+      this.anim.cancel();
+      this.anim = null;
+    }
+    this.finalOffset = null;
+    this.jitterRatio = 0;
+
     this.hintEl.textContent = "";
     this.hintEl.classList.remove("show");
+    this.resultEl.innerHTML = "";
+    this.resultEl.className = "case-result";
+    if (this.titleEl) {
+      this.titleEl.innerHTML = "";
+      const img = document.createElement("img");
+      img.src = `assets/images/${item.image}`;
+      img.alt = "";
+      img.draggable = false;
+      if (item.imageFilter) img.style.filter = item.imageFilter;
+      this.titleEl.appendChild(img);
+      this.titleEl.appendChild(document.createTextNode(item.name));
+    }
 
     this.popup.classList.remove("popup-closing");
     this.popup.classList.add("active");
@@ -139,8 +253,8 @@ class CaseManager {
       this.buildTrack(drops);
 
       this.track.style.transition = "none";
-      this.track.style.transform = `translateX(${-this.offsetFor(this.startIndex, 0)}px)`;
-      void this.track.offsetWidth; // перезапуск анимации
+      this.track.style.transform = this.tf(this.offsetFor(this.startIndex, 0));
+      void this.track.offsetWidth; // фиксируем стартовую позицию
 
       // Небольшая пауза, чтобы успела появиться рулетка
       setTimeout(() => this.run(prize), 500);
@@ -150,33 +264,32 @@ class CaseManager {
   }
 
   async run(prize) {
-    // Останавливаемся уверенно внутри карточки, не у самого края
-    const jitter = (Math.random() - 0.5) * this.getStep() * 0.5;
-    const endOffset = this.offsetFor(this.winnerIndex, jitter);
+    // Рамка-выделение стоит по центру, поэтому сдвиг небольшой — карточка остаётся внутри рамки
+    this.jitterRatio = (Math.random() - 0.5) * 0.16;
+    this.track.style.transition = "none";
 
-    // Быстрый старт и резкое замедление без долгого «доползания» в конце
-    this.track.style.transition = `transform ${this.spinDuration}ms cubic-bezier(0.165, 0.84, 0.44, 1)`;
-    this.track.style.transform = `translateX(${-endOffset}px)`;
-
-    await new Promise((resolve) => {
-      let finished = false;
-      const done = () => {
-        if (finished) return;
-        finished = true;
-        this.track.removeEventListener("transitionend", onEnd);
-        resolve();
-      };
-      // Реагируем только на саму ленту, а не на всплывающие события карточек
-      const onEnd = (e) => {
-        if (e.target === this.track && e.propertyName === "transform") done();
-      };
-      this.track.addEventListener("transitionend", onEnd);
-      setTimeout(done, this.spinDuration + 300); // страховка
+    // Быстрый старт и резкое замедление без долгого «доползания» в конце.
+    // Web Animations: при смене размера окна ключевые кадры обновляются на лету.
+    const instant =
+      document.body.classList.contains("no-animations") ||
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    this.anim = this.track.animate(this.keyframes(), {
+      duration: instant ? 1 : this.spinDuration,
+      easing: "cubic-bezier(0.165, 0.84, 0.44, 1)",
+      fill: "forwards",
     });
+    try {
+      await this.anim.finished;
+    } catch (e) {
+      /* отменена (закрыли/пересчитали) */
+    }
+    this.anim = null;
 
     // Точно фиксируем ленту на выигрышной карточке
+    this.finalOffset = this.endOffset();
+    this.track.getAnimations().forEach((a) => a.cancel());
     this.track.style.transition = "none";
-    this.track.style.transform = `translateX(${-endOffset}px)`;
+    this.track.style.transform = this.tf(this.finalOffset);
     void this.track.offsetWidth;
 
     // Подсвечиваем выигрышную карточку, остальные приглушаем
@@ -190,6 +303,10 @@ class CaseManager {
       clicker.updateDisplay();
       if (window.storeManager) window.storeManager.updateBalance();
     }
+
+    // Плашка с выигрышем
+    this.resultEl.className = `case-result r-${prize.rarity}`;
+    this.resultEl.innerHTML = `<div class="case-result-chip"><span class="coin coin-mid"></span><span>+${this.fmt(prize.coins)}</span><small>${this.rarityNames[prize.rarity] || ""}</small></div>`;
 
     this.isSpinning = false;
     this.isFinished = true;
@@ -205,6 +322,7 @@ class CaseManager {
       this.popup.classList.remove("active", "popup-closing");
       this.isClosing = false;
       this.isFinished = false;
+      this.finalOffset = null;
 
       // Не снимаем блокировку прокрутки, если под кейсом открыт другой popup
       const stillOpen = document.querySelector(

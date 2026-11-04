@@ -1,0 +1,716 @@
+/* ==========================================================================
+   fx.css — подключается ПОСЛЕДНИМ.
+   1.  Фон: слои с плавной сменой («раскрытие» от места нажатия)
+   2.  «Анимации» выкл/вкл без перезапуска всех анимаций
+   3.  Нет «передёргиваний»: состояния через transition (обратная анимация)
+   4.  Новые M3 Expressive анимации
+   5.  Настройки: нормальные отступы сверху и между блоками
+   6.  Цвета градиента: добавление / удаление любого количества
+   7.  Мобильные: вкладки листаются вправо / влево
+   8.  Прогрев окон (чтобы анимации не «съедались» при первом открытии)
+   ========================================================================== */
+
+/* ---------- 1. Фон: слои ---------- */
+#bgStack {
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    overflow: hidden;
+}
+
+.bg-layer {
+    position: absolute;
+    inset: 0;
+    background-position: 0% 50%;
+}
+
+/* Градиент двигает слой, а не body — смена фона не сбрасывает его в начало */
+.bg-layer.is-animated {
+    animation: gradient 20s ease infinite;
+    animation-delay: var(--bg-phase, 0ms);
+}
+
+.bg-layer.bg-enter {
+    animation: bgReveal 950ms var(--m3e-emphasized) both;
+}
+
+.bg-layer.is-animated.bg-enter {
+    animation:
+        gradient 20s ease infinite,
+        bgReveal 950ms var(--m3e-emphasized) both;
+    animation-delay: var(--bg-phase, 0ms), 0ms;
+}
+
+/* «Анимированный градиент» выкл — пауза на месте, без прыжка в начало */
+#bgStack.is-paused .bg-layer.is-animated {
+    animation-play-state: paused, running;
+}
+
+@keyframes bgReveal {
+    from {
+        clip-path: circle(0 at var(--bg-x, 50%) var(--bg-y, 50%));
+    }
+    to {
+        clip-path: circle(150vmax at var(--bg-x, 50%) var(--bg-y, 50%));
+    }
+}
+
+/* Сам body больше не анимируется (раньше градиент гонялся и под слоями) */
+body {
+    animation: none !important;
+}
+
+/* ---------- 2. «Анимации» выкл: длительность ~0 вместо animation:none ----------
+   animation:none при возврате включал ВСЕ анимации заново (всё «дёргалось»).
+   Теперь имена анимаций остаются, они просто мгновенные — и не перезапускаются. */
+.no-animations *,
+.no-animations *::before,
+.no-animations *::after {
+    animation-duration: 1ms !important;
+    animation-delay: 0s !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 1ms !important;
+    transition-delay: 0s !important;
+}
+
+/* ---------- 3. Без «передёргиваний» ---------- */
+
+/* Пресеты акцентного цвета: список анимаций больше не меняется при выборе
+   (раньше .preset-pulse подменял presetStagger → вход пресета играл заново) */
+body .accent-preset.preset-pulse {
+    animation-name: presetStagger;
+    animation-duration: 0.4s;
+    animation-timing-function: ease-out;
+    animation-iteration-count: 1;
+    animation-fill-mode: forwards;
+}
+
+/* Галочка: transition вместо keyframes — при снятии выбора играет ОБРАТНАЯ анимация */
+body .accent-preset::after {
+    transform: translate(-50%, -50%) scale(0) rotate(-90deg);
+    opacity: 0;
+    transition:
+        transform 480ms var(--m3e-spring-bouncy),
+        opacity 180ms linear;
+}
+
+body .accent-preset.active::after {
+    animation: none;
+    transform: translate(-50%, -50%) scale(1) rotate(0deg);
+    opacity: 1;
+}
+
+/* Скин: галочка на выбранной карточке — то же самое */
+body .skin-card::after {
+    content: "check";
+    font-family: "Material Symbols Rounded";
+    font-size: 20px;
+    font-weight: normal;
+    line-height: 1;
+    font-feature-settings: "liga";
+    font-variation-settings: "wght" 600;
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: var(--m3e-primary);
+    color: var(--m3e-on-primary);
+    box-shadow: var(--m3e-e1);
+    pointer-events: none;
+    transform: scale(0) rotate(-120deg);
+    opacity: 0;
+    transition:
+        transform 520ms var(--m3e-spring-bouncy),
+        opacity 160ms linear;
+}
+
+body .skin-card.active::after {
+    animation: none;
+    transform: none;
+    opacity: 1;
+}
+
+/* Круг-индикатор цвета: «свечение» не перезапускается при смене акцента */
+body .accent-color-preview {
+    transition:
+        background-color 450ms var(--m3e-emphasized),
+        border-radius var(--m3e-t) var(--m3e-spring-spatial),
+        transform var(--m3e-t-fast) var(--m3e-spring-bouncy);
+}
+
+/* ---------- 4. Новые M3 Expressive анимации ---------- */
+
+/* 4.1 Кнопки: форма «морфит» при нажатии (круглая → скруглённый квадрат) + пружина */
+body .buy-btn,
+body .upgrade-btn,
+body .casino-spin-btn,
+body .mod-btn,
+body .link-btn,
+body .danger-btn,
+body .confirm-btn,
+body .color-picker-confirm,
+body .color-picker-cancel,
+body .casino-bet-quick,
+body .gradient-add-btn {
+    transition:
+        border-radius var(--m3e-t-fast) var(--m3e-spring-spatial),
+        transform var(--m3e-t-fast) var(--m3e-spring-bouncy),
+        background-color var(--m3e-t-fx) linear,
+        color var(--m3e-t-fx) linear,
+        box-shadow var(--m3e-t-fx) linear,
+        opacity var(--m3e-t-fx) linear;
+}
+
+body .buy-btn:not(:disabled):active,
+body .upgrade-btn:not(:disabled):active,
+body .casino-spin-btn:not(:disabled):active,
+body .mod-btn:active,
+body .link-btn:active,
+body .danger-btn:active,
+body .confirm-btn:active,
+body .color-picker-confirm:active,
+body .color-picker-cancel:active,
+body .casino-bet-quick:active,
+body .gradient-add-btn:active {
+    border-radius: var(--m3e-r-md);
+    transform: scale(0.95);
+}
+
+/* 4.2 Окна растут из кнопки, которой их открыли (fx.js ставит transform-origin) */
+@media (min-width: 769px) {
+    body .store-popup .popup-content,
+    body .skins-popup .popup-content,
+    body .settings-popup .popup-content,
+    body .inventory-popup .popup-content,
+    body .casino-popup .popup-content {
+        transform-origin: var(--m3x-ox, 50%) var(--m3x-oy, 50%);
+    }
+}
+
+/* 4.3 Иконки вкладок настроек: активная слегка вырастает и «дышит» пружиной */
+body .settings-tabs .tab-btn .tab-emoji {
+    display: inline-flex;
+    transition: transform var(--m3e-t) var(--m3e-spring-bouncy);
+}
+
+body .settings-tabs .tab-btn.active .tab-emoji {
+    transform: scale(1.14);
+}
+
+body .settings-tabs .tab-btn:active .tab-emoji {
+    transform: scale(0.86);
+}
+
+/* 4.4 Нижняя панель (мобилы): «таблетка» активной вкладки растёт пружиной от центра */
+@media (max-width: 768px) {
+    body .header-buttons .icon-btn {
+        position: relative;
+    }
+
+    body .header-buttons .icon-btn::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 50%;
+        width: 56px;
+        height: 32px;
+        margin-left: -28px;
+        border-radius: 16px;
+        background: var(--m3e-secondary-container);
+        transform: scaleX(0.25) scaleY(0.6);
+        opacity: 0;
+        transition:
+            transform 520ms var(--m3e-spring-bouncy),
+            opacity 140ms linear;
+        pointer-events: none;
+    }
+
+    body .header-buttons .icon-btn.nav-active::before {
+        transform: none;
+        opacity: 1;
+    }
+
+    body .header-buttons .icon-btn .material-symbols-rounded {
+        position: relative;
+        z-index: 1;
+    }
+
+    /* иконка активной вкладки приподнимается пружиной (transition — на снятии играет в обратную сторону) */
+    body .header-buttons .icon-btn .material-symbols-rounded {
+        transition:
+            translate 480ms var(--m3e-spring-bouncy),
+            scale 480ms var(--m3e-spring-bouncy),
+            color var(--m3e-t-fx) linear,
+            font-variation-settings var(--m3e-t-fast) var(--m3e-spring-effects);
+    }
+
+    body .header-buttons .icon-btn.nav-active .material-symbols-rounded {
+        translate: 0 -1px;
+        scale: 1.1;
+    }
+
+    /* счётчик: «пружинка» не подменяет вход m3xDrop — иначе он играл заново после каждого клика */
+    body .counter.m3e-bump {
+        animation:
+            m3xDrop 650ms var(--m3e-spring-spatial) 60ms backwards,
+            m3eBump 420ms var(--m3e-spring-bouncy);
+    }
+
+    body .header-buttons .icon-btn .nav-label {
+        transition:
+            color var(--m3e-t-fx) linear,
+            font-weight var(--m3e-t-fx) linear;
+    }
+}
+
+/* 4.5 Карточки: пружинистое «нажатие» и морф формы по наведению */
+body .store-item,
+body .skin-card,
+body .inventory-item {
+    transition:
+        transform var(--m3e-t-fast) var(--m3e-spring-bouncy),
+        border-radius var(--m3e-t) var(--m3e-spring-spatial),
+        box-shadow var(--m3e-t-fx) linear,
+        background-color var(--m3e-t-fx) linear;
+}
+
+/* 4.6 Уведомления: выезжают снизу пружиной */
+@keyframes m3xSnackIn {
+    from {
+        opacity: 0;
+        transform: translate(-50%, 24px) scale(0.92);
+    }
+    to {
+        opacity: 1;
+        transform: translate(-50%, 0) scale(1);
+    }
+}
+
+/* ---------- 5. Настройки: отступы ---------- */
+
+/* шапка */
+body .settings-popup .popup-header {
+    padding: 1.25rem 1.5rem 0.25rem 1.75rem;
+}
+
+/* ряд вкладок: один ряд, без «липкого» top и переноса на мобилах */
+body .settings-popup .settings-tabs {
+    position: relative;
+    top: auto;
+    margin: 0;
+    padding: 0.5rem 1.5rem 0.5rem;
+    gap: 0.25rem;
+    flex-wrap: nowrap;
+    justify-content: flex-start;
+    overflow-x: auto;
+}
+
+/* содержимое */
+body .settings-popup .settings-content {
+    padding: 0.5rem 1.5rem 1.5rem;
+    gap: 1rem;
+}
+
+body .settings-popup .setting-category {
+    padding: 1.25rem;
+}
+
+body .settings-popup .category-title {
+    margin: 0 0 0.75rem;
+}
+
+/* внутри блока — один ритм 0.75rem вместо накладывающихся margin / padding */
+body .settings-popup .setting-group {
+    padding-top: 0;
+    gap: 0.75rem;
+}
+
+body .settings-popup .setting-group > *,
+body .settings-popup .setting-item,
+body .settings-popup .setting-item:first-child,
+body .settings-popup .background-selection,
+body .settings-popup .sound-selection,
+body .settings-popup .accent-color-selection {
+    margin-top: 0;
+    margin-bottom: 0;
+}
+
+body .settings-popup .background-selection {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+body .settings-popup .background-type-selector {
+    margin: 0;
+}
+
+body .settings-popup .color-picker-container,
+body .settings-popup .custom-gradient-container {
+    margin: 0;
+    padding: 1rem;
+}
+
+body .settings-popup .accent-color-selection {
+    padding: 1.1rem 1rem 1rem;
+}
+
+body .settings-popup .accent-color-description {
+    margin-bottom: 0.75rem;
+}
+
+/* мобилы: заголовок не липнет к краю и не залезает под вырез */
+@media (max-width: 768px) {
+    body .settings-popup .popup-header {
+        min-height: 0;
+        box-sizing: border-box;
+        padding: calc(env(safe-area-inset-top, 0px) + 1.1rem) 1.25rem 0.25rem;
+    }
+
+    body .settings-popup .settings-tabs {
+        padding: 0.5rem 0.75rem 0.5rem;
+        gap: 0;
+        justify-content: space-between;
+        overflow-x: auto;
+    }
+
+    body .settings-popup .settings-tabs .tab-btn,
+    body .settings-popup .settings-tabs .tab-btn:hover,
+    body .settings-popup .settings-tabs .tab-btn:active,
+    body .settings-popup .settings-tabs .tab-btn.active {
+        flex: 1 0 44px;
+        width: auto;
+        min-width: 44px;
+        max-width: 64px;
+        height: 48px;
+    }
+
+    body .settings-popup .settings-content {
+        padding: 0.5rem 1rem calc(1.25rem + env(safe-area-inset-bottom, 0px));
+    }
+
+    body .settings-popup .setting-category {
+        padding: 1rem;
+    }
+}
+
+/* ---------- 6. Цвета градиента ---------- */
+body .gradient-colors-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 0.5rem;
+    margin-top: 0.75rem;
+}
+
+body .gradient-color-item,
+body .gradient-color-item:hover {
+    position: relative;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.5rem 0.4rem 0.5rem 0.55rem;
+    text-align: left;
+    background: var(--m3e-sc);
+    border: 1px solid var(--m3e-outline-variant);
+    border-radius: var(--m3e-r-lg);
+}
+
+body .gradient-color-item .gradient-color-preview {
+    align-self: auto;
+    width: 36px;
+    height: 36px;
+    border: none;
+    border-radius: var(--m3e-r-md);
+    box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.18);
+    cursor: pointer;
+    transition:
+        transform var(--m3e-t-fast) var(--m3e-spring-bouncy),
+        border-radius var(--m3e-t) var(--m3e-spring-spatial);
+}
+
+body .gradient-color-item .gradient-color-preview:hover {
+    transform: scale(1.08);
+    border-radius: var(--m3e-r-full);
+}
+
+body .gradient-color-item .gradient-color-preview:active {
+    transform: scale(0.92);
+}
+
+body .gradient-color-label {
+    flex: 1;
+    min-width: 0;
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--m3e-on-surface);
+}
+
+body .gradient-color-remove {
+    flex: none;
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    display: grid;
+    place-items: center;
+    border: none;
+    border-radius: 50%;
+    background: transparent;
+    color: var(--m3e-on-surface-variant);
+    cursor: pointer;
+    transition:
+        background-color var(--m3e-t-fx) linear,
+        color var(--m3e-t-fx) linear,
+        border-radius var(--m3e-t-fast) var(--m3e-spring-spatial),
+        transform var(--m3e-t-fast) var(--m3e-spring-bouncy),
+        opacity var(--m3e-t-fx) linear;
+}
+
+body .gradient-color-remove .material-symbols-rounded {
+    font-size: 20px;
+}
+
+body .gradient-color-remove:hover:not(:disabled) {
+    background: color-mix(in srgb, var(--m3e-error) 14%, transparent);
+    color: var(--m3e-error);
+    border-radius: var(--m3e-r-md);
+    transform: scale(1.1) rotate(90deg);
+}
+
+body .gradient-color-remove:active:not(:disabled) {
+    transform: scale(0.88) rotate(90deg);
+}
+
+body .gradient-color-remove:disabled {
+    opacity: 0.28;
+    cursor: not-allowed;
+}
+
+/* Появление нового цвета и ОБРАТНАЯ анимация при удалении */
+@keyframes m3xItemPop {
+    from {
+        opacity: 0;
+        transform: scale(0.4) rotate(-6deg);
+    }
+    to {
+        opacity: 1;
+        transform: none;
+    }
+}
+
+body .gradient-color-item.is-entering {
+    animation: m3xItemPop 480ms var(--m3e-spring-bouncy) both;
+}
+
+body .gradient-color-item.is-leaving {
+    animation: m3xItemPop 300ms var(--m3e-emphasized) reverse both;
+    pointer-events: none;
+}
+
+body .gradient-add-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    margin-top: 0.75rem;
+    padding: 0.65rem 1.2rem 0.65rem 0.9rem;
+    border: none;
+    border-radius: var(--m3e-r-full);
+    background: var(--m3e-secondary-container);
+    color: var(--m3e-on-secondary-container);
+    font-family: var(--m3e-font);
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+body .gradient-add-btn .material-symbols-rounded {
+    font-size: 20px;
+    transition: transform var(--m3e-t) var(--m3e-spring-bouncy);
+}
+
+body .gradient-add-btn:hover {
+    border-radius: var(--m3e-r-full);
+    box-shadow: var(--m3e-e1);
+}
+
+body .gradient-add-btn:hover .material-symbols-rounded {
+    transform: rotate(90deg) scale(1.15);
+}
+
+body .gradient-preview {
+    height: 56px;
+    margin-top: 0.75rem;
+    border: none;
+    border-radius: var(--m3e-r-lg);
+    box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.12);
+}
+
+body .gradient-hint {
+    margin-top: 0.5rem;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+}
+
+@media (max-width: 480px) {
+    body .gradient-colors-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* ---------- 7. Мобилы: вкладки листаются вправо / влево ----------
+   mobile-nav.js ставит data-slide="fwd" (вкладка правее) или "back" (левее) на оба
+   окна: уходящее и приходящее. Окна едут рядом, как страницы. */
+@keyframes m3xPageInFwd {
+    from {
+        transform: translateX(100%);
+    }
+    to {
+        transform: none;
+    }
+}
+@keyframes m3xPageOutFwd {
+    from {
+        transform: none;
+    }
+    to {
+        transform: translateX(-100%);
+    }
+}
+@keyframes m3xPageInBack {
+    from {
+        transform: translateX(-100%);
+    }
+    to {
+        transform: none;
+    }
+}
+@keyframes m3xPageOutBack {
+    from {
+        transform: none;
+    }
+    to {
+        transform: translateX(100%);
+    }
+}
+
+@media (max-width: 768px) {
+    /* подложку окна не анимируем: листаются только «страницы» */
+    body .store-popup[data-slide],
+    body .skins-popup[data-slide],
+    body .settings-popup[data-slide],
+    body .inventory-popup[data-slide],
+    body .casino-popup[data-slide],
+    body .daily-popup[data-slide] {
+        animation: none !important;
+        overflow: hidden;
+    }
+
+    /* Пока окно листается к другому окну, под страницами и в скруглениях нижней панели
+       не должна просвечивать страница кликера. Классы ставит mobile-nav.js:
+       m3x-nav-open  — полоса под панелью (за её скруглёнными углами);
+       m3x-nav-between — ещё и сплошной слой на всю область окон (окно ↔ окно). */
+    html.m3x-nav-open body::before {
+        content: "";
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        height: calc(var(--nav-h) + var(--nav-safe));
+        background: var(--m3e-sc-high);
+        z-index: 999;
+        pointer-events: none;
+    }
+
+    html.m3x-nav-between body::after {
+        content: "";
+        position: fixed;
+        inset: 0;
+        background: var(--m3e-sc-high);
+        z-index: 999;
+        pointer-events: none;
+    }
+
+    /* на время листания подложка прозрачная — видно соседнюю «страницу» */
+    body .store-popup[data-sliding],
+    body .skins-popup[data-sliding],
+    body .settings-popup[data-sliding],
+    body .inventory-popup[data-sliding],
+    body .casino-popup[data-sliding],
+    body .daily-popup[data-sliding] {
+        background: transparent !important;
+    }
+
+    body .store-popup.active[data-slide="fwd"] .popup-content,
+    body .skins-popup.active[data-slide="fwd"] .popup-content,
+    body .settings-popup.active[data-slide="fwd"] .popup-content,
+    body .inventory-popup.active[data-slide="fwd"] .popup-content,
+    body .casino-popup.active[data-slide="fwd"] .popup-content {
+        animation: m3xPageInFwd 380ms var(--m3e-emphasized) both !important;
+    }
+
+    body .store-popup.active[data-slide="back"] .popup-content,
+    body .skins-popup.active[data-slide="back"] .popup-content,
+    body .settings-popup.active[data-slide="back"] .popup-content,
+    body .inventory-popup.active[data-slide="back"] .popup-content,
+    body .casino-popup.active[data-slide="back"] .popup-content {
+        animation: m3xPageInBack 380ms var(--m3e-emphasized) both !important;
+    }
+
+    body .store-popup.popup-closing[data-slide="fwd"] .popup-content,
+    body .skins-popup.popup-closing[data-slide="fwd"] .popup-content,
+    body .settings-popup.popup-closing[data-slide="fwd"] .popup-content,
+    body .inventory-popup.popup-closing[data-slide="fwd"] .popup-content,
+    body .casino-popup.popup-closing[data-slide="fwd"] .popup-content {
+        animation: m3xPageOutFwd 380ms var(--m3e-emphasized) forwards !important;
+    }
+
+    body .store-popup.popup-closing[data-slide="back"] .popup-content,
+    body .skins-popup.popup-closing[data-slide="back"] .popup-content,
+    body .settings-popup.popup-closing[data-slide="back"] .popup-content,
+    body .inventory-popup.popup-closing[data-slide="back"] .popup-content,
+    body .casino-popup.popup-closing[data-slide="back"] .popup-content {
+        animation: m3xPageOutBack 380ms var(--m3e-emphasized) forwards !important;
+    }
+}
+
+/* ---------- 8. Прогрев окон ----------
+   fx.js на секунду показывает каждое окно почти прозрачным, чтобы браузер
+   заранее посчитал стили, раскладку, размытие и декодировал картинки.
+   Иначе при ПЕРВОМ открытии первый кадр занимает сотни мс, и анимация «съедается». */
+.m3x-prewarm {
+    display: flex !important;
+    opacity: 0.01 !important;
+    pointer-events: none !important;
+}
+
+.m3x-prewarm,
+.m3x-prewarm * {
+    animation: none !important;
+    transition: none !important;
+}
+
+/* Бесконечные «фоновые» анимации при выключении «Анимаций» не сбрасываются — только пауза */
+.no-animations .bg-layer.is-animated {
+    animation-duration: 20s !important;
+    animation-iteration-count: infinite !important;
+    animation-play-state: paused !important;
+}
+
+.no-animations .click-area {
+    animation-duration: 850ms, 7s !important;
+    animation-iteration-count: 1, infinite !important;
+    animation-play-state: running, paused !important;
+}
+
+/* ---------- 9. Настройки: при смене вкладки не мелькает скроллбар ----------
+   Страницы въезжают/уезжают по горизонтали (translate) и на миг шире контейнера —
+   из-за overflow-y: auto появлялся горизонтальный скроллбар внизу. */
+body .settings-popup .settings-content {
+    overflow-x: hidden;
+}

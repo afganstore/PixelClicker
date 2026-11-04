@@ -164,12 +164,20 @@ class PixelClicker {
     }
   }
 
+  // Коэффициент размера: 1 — скин 300px (десктоп), на мобилах скин меньше —
+  // и текст «+N» / «КРИТ +N» уменьшается вместе с ним
+  getSizeScale() {
+    const w = this.clickImage.offsetWidth || 300;
+    return Math.min(1.2, Math.max(0.45, w / 300));
+  }
+
   getRandomPositionAroundPixel(event) {
     const pixelRect = this.clickImage.getBoundingClientRect();
     const pixelCenterX = pixelRect.left + pixelRect.width / 2;
     const pixelCenterY = pixelRect.top + pixelRect.height / 2;
 
-    const distance = 50 + Math.random() * 100;
+    // Радиус разлёта «+N» тоже зависит от размера скина
+    const distance = (50 + Math.random() * 100) * this.getSizeScale();
     const angle = Math.random() * Math.PI * 2;
 
     const x = pixelCenterX + Math.cos(angle) * distance;
@@ -183,6 +191,10 @@ class PixelClicker {
     overlay.className = "click-overlay";
     overlay.textContent = isCrit ? `КРИТ +${increment}` : `+${increment}`;
 
+    const sizeScale = this.getSizeScale();
+    const fs = (rem) => `${(rem * sizeScale).toFixed(2)}rem`;
+    overlay.style.fontSize = fs(2.5);
+
     const position = this.getRandomPositionAroundPixel(event);
     overlay.style.left = `${position.x}px`;
     overlay.style.top = `${position.y}px`;
@@ -193,30 +205,30 @@ class PixelClicker {
     // Разный цвет в зависимости от величины инкремента
     if (increment >= 1000) {
       overlay.style.color = "#ff4444";
-      overlay.style.fontSize = "3.5rem";
+      overlay.style.fontSize = fs(3.5);
       overlay.style.fontWeight = "900";
       overlay.style.textShadow =
         "0 2px 4px rgba(0, 0, 0, 0.8), 0 4px 20px rgba(255, 68, 68, 0.8), 0 8px 40px rgba(255, 68, 68, 0.6)";
     } else if (increment >= 500) {
       overlay.style.color = "#ff6b35";
-      overlay.style.fontSize = "3rem";
+      overlay.style.fontSize = fs(3);
       overlay.style.fontWeight = "700";
       overlay.style.textShadow =
         "0 2px 4px rgba(0, 0, 0, 0.8), 0 4px 20px rgba(255, 107, 53, 0.8)";
     } else if (increment >= 100) {
       overlay.style.color = "#ffaa00";
-      overlay.style.fontSize = "2.8rem";
+      overlay.style.fontSize = fs(2.8);
       overlay.style.fontWeight = "600";
       overlay.style.textShadow =
         "0 2px 4px rgba(0, 0, 0, 0.8), 0 4px 20px rgba(255, 170, 0, 0.8)";
     } else if (increment >= 50) {
       overlay.style.color = "#ffd700";
-      overlay.style.fontSize = "2.5rem";
+      overlay.style.fontSize = fs(2.5);
       overlay.style.textShadow =
         "0 2px 4px rgba(0, 0, 0, 0.8), 0 4px 20px rgba(255, 215, 0, 0.8)";
     } else if (increment >= 10) {
       overlay.style.color = "#a0e7a0";
-      overlay.style.fontSize = "2.2rem";
+      overlay.style.fontSize = fs(2.2);
       overlay.style.textShadow =
         "0 2px 4px rgba(0, 0, 0, 0.8), 0 4px 20px rgba(160, 231, 160, 0.8)";
     }
@@ -275,7 +287,7 @@ class PixelClicker {
     // Градиент уже двигает CSS-анимация (main.css, класс body). JS-цикл поверх неё
     // ничего не давал (анимация перекрывает inline-стили), но каждый кадр гонял
     // лишнюю работу и игнорировал тумблеры «Анимации» / «Анимированный градиент».
-    const cssDriven = getComputedStyle(document.body).animationName !== "none";
+    const cssDriven = true; // фон рисуют CSS-слои #bgStack (settings.js) — JS-цикл не нужен
     const animationsEnabled = localStorage.getItem("animationsEnabled") !== "false";
     const gradientEnabled = localStorage.getItem("gradientEnabled") !== "false";
     if (cssDriven || !animationsEnabled || !gradientEnabled) return;

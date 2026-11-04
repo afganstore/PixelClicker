@@ -148,7 +148,6 @@
 .no-animations .accent-preset.accent-just-picked,
 .no-animations .welcome-color.is-on,
 .no-animations .welcome-color.is-on::after {
-    animation: none !important;
 }
 
 .no-animations .accent-wave {

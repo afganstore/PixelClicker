@@ -98,30 +98,6 @@ body.welcome-lock {
     color: var(--m3e-primary, var(--accent-color, #6750a4));
 }
 
-.welcome-skip {
-    flex: none;
-    border: 0;
-    padding: 8px 14px;
-    border-radius: var(--m3e-r-full, 999px);
-    background: transparent;
-    color: var(--m3e-on-surface-variant, #49454f);
-    font: inherit;
-    font-size: 0.85rem;
-    font-weight: 500;
-    cursor: pointer;
-    transition:
-        background 0.2s ease,
-        opacity 0.2s ease;
-}
-
-.welcome-skip:hover {
-    background: var(--m3e-sc-high, #ece6f0);
-}
-
-.welcome-skip[hidden] {
-    display: none;
-}
-
 /* ---------- Лента шагов ---------- */
 .welcome-viewport {
     position: relative;
@@ -377,51 +353,6 @@ body.welcome-lock {
     font-weight: 400;
     font-size: 0.8rem;
     color: var(--m3e-on-surface-variant, #49454f);
-}
-
-.welcome-switch {
-    position: relative;
-    flex: none;
-    width: 52px;
-    height: 32px;
-    border-radius: var(--m3e-r-full, 999px);
-    background: var(--m3e-sc-highest, #e6e0e9);
-    box-shadow: inset 0 0 0 2px var(--m3e-outline, #79747e);
-    transition:
-        background 0.3s ease,
-        box-shadow 0.3s ease;
-}
-
-.welcome-switch::after {
-    content: "";
-    position: absolute;
-    top: 8px;
-    left: 8px;
-    width: 16px;
-    height: 16px;
-    border-radius: 50%;
-    background: var(--m3e-outline, #79747e);
-    transition:
-        transform 0.4s var(--m3e-spring-bouncy, ease-out),
-        width 0.3s ease,
-        height 0.3s ease,
-        top 0.3s ease,
-        left 0.3s ease,
-        background 0.3s ease;
-}
-
-.welcome-row.is-on .welcome-switch {
-    background: var(--m3e-primary, var(--accent-color, #6750a4));
-    box-shadow: inset 0 0 0 2px transparent;
-}
-
-.welcome-row.is-on .welcome-switch::after {
-    width: 24px;
-    height: 24px;
-    top: 4px;
-    left: 4px;
-    transform: translateX(20px);
-    background: var(--m3e-on-primary, #fff);
 }
 
 /* ---------- Финал ---------- */

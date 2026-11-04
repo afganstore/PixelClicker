@@ -1,0 +1,330 @@
+/* ==========================================================================
+   Мобильная версия (≤ 768px):
+   • нижняя панель вкладок вместо кнопок в шапке;
+   • счётчик монет по центру над скином;
+   • приветственное окно на весь экран.
+   Подключается последним, остальные стили не затрагиваются.
+   ========================================================================== */
+
+/* На десктопе подписи вкладок не нужны */
+.nav-label {
+    display: none;
+}
+
+/* Вкладка «Кликер» есть только в мобильной нижней панели */
+body .header-buttons #clickerBtn {
+    display: none;
+}
+
+/* Задержки появления иконок — как были до добавления вкладки «Кликер» */
+body .header-buttons #storeBtn {
+    --m3x-i: 0;
+}
+body .header-buttons #inventoryBtn {
+    --m3x-i: 1;
+}
+body .header-buttons #skinsBtn {
+    --m3x-i: 2;
+}
+body .header-buttons #casinoBtn {
+    --m3x-i: 3;
+}
+body .header-buttons #dailyBtn {
+    --m3x-i: 4;
+}
+
+@media (max-width: 768px) {
+    :root {
+        --nav-h: 68px;
+        --nav-safe: env(safe-area-inset-bottom, 0px);
+    }
+
+    body {
+        height: 100vh;
+        height: 100dvh;
+    }
+
+    /* ---------- Счётчик: по центру над скином ---------- */
+    body .header {
+        display: contents;
+        animation: none;
+    }
+
+    body .container {
+        padding-bottom: calc(var(--nav-h) + var(--nav-safe));
+        gap: 1.5rem;
+    }
+
+    body .counter {
+        order: -1;
+        text-align: center;
+        transform-origin: center;
+        max-width: calc(100vw - 2rem);
+        padding: 0.65rem 1.6rem;
+        animation: m3xDrop 650ms var(--m3e-spring-spatial) 60ms backwards;
+    }
+
+    /* ---------- Нижняя панель вкладок ---------- */
+    body .header-buttons {
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 1050;
+        display: flex;
+        align-items: stretch;
+        justify-content: space-around;
+        gap: 0;
+        padding: 10px 2px calc(10px + var(--nav-safe));
+        background: var(--m3e-sc-high);
+        border-radius: 28px 28px 0 0;
+        box-shadow: 0 -2px 16px rgba(0, 0, 0, 0.18);
+    }
+
+    body .header-buttons .icon-btn,
+    body .header-buttons .icon-btn:hover,
+    body .header-buttons .icon-btn:active {
+        flex: 1 1 0;
+        min-width: 0;
+        width: auto;
+        height: auto;
+        padding: 0;
+        flex-direction: column;
+        gap: 4px;
+        background: transparent;
+        color: var(--m3e-on-surface-variant);
+        border-radius: 0 !important;
+        box-shadow: none;
+        transform: none;
+    }
+
+    body .header-buttons .icon-btn:active {
+        transform: scale(0.94);
+    }
+
+    /* «Таблетка» под иконкой */
+    body .header-buttons .icon-btn .material-symbols-rounded,
+    body .header-buttons .icon-btn:hover .material-symbols-rounded,
+    body .header-buttons .icon-btn:active .material-symbols-rounded {
+        box-sizing: content-box;
+        width: 24px;
+        height: 24px;
+        padding: 4px 14px;
+        border-radius: 16px;
+        font-size: 24px;
+        transform: none;
+        transition:
+            background-color var(--m3e-t-fast) linear,
+            color var(--m3e-t-fast) linear,
+            font-variation-settings var(--m3e-t-fast) var(--m3e-spring-effects);
+    }
+
+    body .header-buttons #clickerBtn {
+        display: flex;
+    }
+
+    body .header-buttons .icon-btn.nav-active {
+        color: var(--m3e-on-surface);
+    }
+
+    body .header-buttons .icon-btn.nav-active .material-symbols-rounded {
+        color: var(--m3e-on-secondary-container);
+        font-variation-settings:
+            "FILL" 1,
+            "wght" 500,
+            "GRAD" 0,
+            "opsz" 24;
+    }
+
+    body .header-buttons .icon-btn .nav-label {
+        display: block;
+        max-width: 100%;
+        font-size: 10px;
+        line-height: 1.1;
+        font-weight: 500;
+        letter-spacing: -0.01em;
+        white-space: nowrap;
+        overflow: visible;
+        padding: 0 3px;
+        text-align: center;
+    }
+
+    /* ---------- Попапы не перекрывают панель вкладок ---------- */
+    body .store-popup,
+    body .skins-popup,
+    body .settings-popup,
+    body .inventory-popup,
+    body .casino-popup {
+        padding-bottom: calc(var(--nav-h) + var(--nav-safe));
+    }
+
+    body .store-popup .popup-content,
+    body .skins-popup .popup-content,
+    body .settings-popup .popup-content,
+    body .inventory-popup .popup-content,
+    body .casino-popup .popup-content {
+        max-height: calc(100vh - var(--nav-h) - var(--nav-safe) - 2rem);
+        max-height: calc(100dvh - var(--nav-h) - var(--nav-safe) - 2rem);
+    }
+
+    /* ---------- Приветственное окно: на весь экран ---------- */
+    body .welcome {
+        padding: 0;
+        height: 100vh;
+        height: 100dvh;
+    }
+
+    body .welcome .welcome-card {
+        width: 100%;
+        height: 100%;
+        max-height: none;
+        min-height: 100%;
+        border-radius: 0;
+        padding: calc(20px + env(safe-area-inset-top, 0px)) 18px
+            calc(16px + env(safe-area-inset-bottom, 0px));
+        box-shadow: none;
+    }
+
+    body .welcome .welcome-viewport {
+        margin-left: -18px;
+        margin-right: -18px;
+    }
+
+    body .welcome .welcome-step {
+        padding: 0 18px;
+    }
+}
+
+@media (max-width: 340px) {
+    body .header-buttons .icon-btn .material-symbols-rounded,
+    body .header-buttons .icon-btn:hover .material-symbols-rounded,
+    body .header-buttons .icon-btn:active .material-symbols-rounded {
+        padding: 4px 10px;
+    }
+
+    body .header-buttons .icon-btn .nav-label {
+        font-size: 9px;
+    }
+}
+
+/* ==========================================================================
+   Мобильные: окна — на весь экран (без «окон»), нормальные размеры
+   ========================================================================== */
+@media (max-width: 768px) {
+    /* Скин: размер подбирает mobile-nav.js (--skin-w), чтобы всё влезало */
+    body .click-image {
+        width: var(--skin-w, min(70vw, 250px));
+    }
+
+    /* Окно = целый экран над панелью вкладок */
+    body .store-popup.active,
+    body .skins-popup.active,
+    body .settings-popup.active,
+    body .inventory-popup.active,
+    body .casino-popup.active {
+        align-items: stretch;
+        justify-content: stretch;
+        padding: 0 0 calc(var(--nav-h) + var(--nav-safe));
+    }
+
+    body .store-popup .popup-content,
+    body .skins-popup .popup-content,
+    body .settings-popup .popup-content,
+    body .inventory-popup .popup-content,
+    body .casino-popup .popup-content,
+    body .daily-popup .popup-content {
+        width: 100%;
+        max-width: none;
+        height: 100%;
+        max-height: none;
+        margin: 0;
+        border: none;
+        border-radius: 0;
+        box-shadow: none;
+    }
+
+    /* Без крестика: выйти из окна можно через вкладку «Кликер» */
+    body .store-popup .close-btn,
+    body .skins-popup .close-btn,
+    body .settings-popup .close-btn,
+    body .inventory-popup .close-btn,
+    body .casino-popup .close-btn {
+        display: none;
+    }
+
+    /* Сплошной фон окна: за скруглениями панели и вокруг окна не просвечивает фон страницы */
+    body .store-popup,
+    body .skins-popup,
+    body .settings-popup,
+    body .inventory-popup,
+    body .casino-popup {
+        background: var(--m3e-sc-high);
+        -webkit-backdrop-filter: none;
+        backdrop-filter: none;
+    }
+
+    /* Шапка окна: не залезает под вырез, заголовок ровно по левому краю
+       и по центру по вертикали (крестика справа нет) */
+    body .store-popup .popup-header,
+    body .skins-popup .popup-header,
+    body .settings-popup .popup-header,
+    body .inventory-popup .popup-header,
+    body .casino-popup .popup-header {
+        justify-content: flex-start;
+        align-items: center;
+        min-height: 56px;
+        box-sizing: content-box;
+        padding: calc(0.9rem + env(safe-area-inset-top, 0px)) 1.25rem 0.75rem;
+    }
+
+    body .store-popup .popup-header h2,
+    body .skins-popup .popup-header h2,
+    body .settings-popup .popup-header h2,
+    body .inventory-popup .popup-header h2,
+    body .casino-popup .popup-header h2,
+    body .casino-popup.daily-popup .popup-header h2 {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin: 0;
+        min-width: 0;
+        font-size: 1.4rem;
+        line-height: 1.2;
+        text-align: left;
+    }
+
+    /* Настройки: сразу под заголовком вкладки — без большого отступа */
+    body .settings-popup .popup-header {
+        min-height: 0;
+        padding-bottom: 0.25rem;
+    }
+
+    body .settings-popup .settings-tabs {
+        margin-top: 0;
+        padding-top: 0.25rem;
+        padding-bottom: 0.5rem;
+    }
+
+    body .popup-header h2 .material-symbols-rounded {
+        font-size: 28px;
+        line-height: 1;
+    }
+
+    /* Кнопки нижней панели: анимация нажатия — по «таблетке», а не квадратом */
+    body .header-buttons .icon-btn {
+        -webkit-tap-highlight-color: transparent;
+        outline: none;
+    }
+
+    body .header-buttons .icon-btn .m3e-ripple {
+        display: none;
+    }
+
+    body .header-buttons .icon-btn:active .material-symbols-rounded {
+        background: color-mix(in srgb, var(--m3e-on-surface) 12%, transparent);
+    }
+
+    body .header-buttons .icon-btn.nav-active:active .material-symbols-rounded {
+        background: transparent;
+    }
+}

@@ -31,18 +31,8 @@ class SettingsManager {
     this.backgroundTypeSelect = document.getElementById("backgroundTypeSelect");
     this.solidColorInput = document.getElementById("solidColorInput");
     this.colorPreview = document.getElementById("colorPreview");
-    this.gradientColorInputs = [
-      document.getElementById("gradientColor1"),
-      document.getElementById("gradientColor2"),
-      document.getElementById("gradientColor3"),
-      document.getElementById("gradientColor4"),
-    ];
-    this.gradientColorPreviews = [
-      document.getElementById("gradientColorPreview1"),
-      document.getElementById("gradientColorPreview2"),
-      document.getElementById("gradientColorPreview3"),
-      document.getElementById("gradientColorPreview4"),
-    ];
+    this.gradientColorsGrid = document.getElementById("gradientColorsGrid");
+    this.gradientAddBtn = document.getElementById("gradientAddColor");
     this.gradientPreview = document.getElementById("gradientPreview");
 
     // Элементы для акцентного цвета
@@ -77,6 +67,14 @@ class SettingsManager {
   }
 
   init() {
+    // Запоминаем место последнего нажатия — от него «раскрывается» новый фон
+    document.addEventListener(
+      "pointerdown",
+      (e) => {
+        this._lastPointer = { x: e.clientX, y: e.clientY };
+      },
+      { passive: true, capture: true },
+    );
     this.loadSettings();
     this.setupEventListeners();
     this.applyOptimizationSettings();
@@ -600,23 +598,31 @@ class SettingsManager {
       });
     }
 
-    // Обработчики для кастомных цветов градиента
-    this.gradientColorPreviews.forEach((preview, index) => {
-      if (preview) {
-        preview.addEventListener("click", () => {
-          const currentColor =
-            this.gradientColorInputs[index]?.value || "#6750a4";
-          this.openColorPicker("gradient", currentColor, index);
-        });
-      }
-    });
+    // Кастомные цвета градиента: список строится динамически (renderGradientColors)
+    if (this.gradientAddBtn) {
+      this.gradientAddBtn.addEventListener("click", () =>
+        this.addGradientColor(),
+      );
+    }
+    if (this.gradientColorsGrid) {
+      this.gradientColorsGrid.addEventListener("click", (e) => {
+        const del = e.target.closest(".gradient-color-remove");
+        if (del) {
+          const item = del.closest(".gradient-color-item");
+          if (item) this.removeGradientColor(Number(item.dataset.index));
+          return;
+        }
+        const preview = e.target.closest(".gradient-color-preview");
+        if (preview) {
+          const item = preview.closest(".gradient-color-item");
+          const index = Number(item.dataset.index);
+          const colors = this.getGradientColors();
+          this.openColorPicker("gradient", colors[index] || "#6750a4", index);
+        }
+      });
+    }
 
     // Скрываем текстовые поля - они теперь только для хранения значений
-    this.gradientColorInputs.forEach((input) => {
-      if (input) {
-        input.style.display = "none";
-      }
-    });
     if (this.solidColorInput) {
       this.solidColorInput.style.display = "none";
     }
@@ -674,32 +680,158 @@ class SettingsManager {
     }
   }
 
+  // ---------- Цвета своего градиента: сколько угодно (минимум 2) ----------
+  getGradientColors() {
+    let colors;
+    try {
+      colors = JSON.parse(localStorage.getItem("customGradientColors"));
+    } catch (e) {
+      colors = null;
+    }
+    if (!Array.isArray(colors)) colors = [];
+    colors = colors.filter((c) => typeof c === "string" && this.validateHexColor(c));
+    const defaults = ["#6750a4", "#b583da", "#e67bd6", "#ff8da1"];
+    if (colors.length === 0) colors = defaults.slice();
+    while (colors.length < 2) colors.push(defaults[colors.length] || "#b583da");
+    return colors;
+  }
+
+  saveGradientColors(colors) {
+    localStorage.setItem("customGradientColors", JSON.stringify(colors));
+  }
+
+  // Новый цвет — сдвиг оттенка последнего, чтобы сразу выглядело красиво
+  nextGradientColor(colors) {
+    const last = colors[colors.length - 1] || "#6750a4";
+    const full = last.length === 4
+      ? "#" + last.slice(1).split("").map((c) => c + c).join("")
+      : last;
+    const r = parseInt(full.slice(1, 3), 16) / 255;
+    const g = parseInt(full.slice(3, 5), 16) / 255;
+    const b = parseInt(full.slice(5, 7), 16) / 255;
+    const max = Math.max(r, g, b);
+    const min = Math.min(r, g, b);
+    let h = 0;
+    const l = (max + min) / 2;
+    const d = max - min;
+    const sat = d === 0 ? 0 : d / (1 - Math.abs(2 * l - 1));
+    if (d !== 0) {
+      if (max === r) h = ((g - b) / d) % 6;
+      else if (max === g) h = (b - r) / d + 2;
+      else h = (r - g) / d + 4;
+    }
+    h = (h * 60 + 47 + 360) % 360;
+    const S = Math.max(0.45, sat);
+    const L = Math.min(0.68, Math.max(0.45, l));
+    const c = (1 - Math.abs(2 * L - 1)) * S;
+    const x = c * (1 - Math.abs(((h / 60) % 2) - 1));
+    const m = L - c / 2;
+    let rgb;
+    if (h < 60) rgb = [c, x, 0];
+    else if (h < 120) rgb = [x, c, 0];
+    else if (h < 180) rgb = [0, c, x];
+    else if (h < 240) rgb = [0, x, c];
+    else if (h < 300) rgb = [x, 0, c];
+    else rgb = [c, 0, x];
+    return (
+      "#" +
+      rgb
+        .map((v) => Math.round((v + m) * 255).toString(16).padStart(2, "0"))
+        .join("")
+    );
+  }
+
+  renderGradientColors(enterIndex = -1) {
+    const grid = this.gradientColorsGrid;
+    if (!grid) return;
+    const colors = this.getGradientColors();
+    const canRemove = colors.length > 2;
+
+    // Переиспользуем существующие элементы, чтобы у остальных не перезапускалась анимация
+    const items = Array.from(grid.querySelectorAll(".gradient-color-item"));
+    while (items.length > colors.length) items.pop().remove();
+    while (items.length < colors.length) {
+      const item = document.createElement("div");
+      item.className = "gradient-color-item";
+      item.innerHTML =
+        '<div class="gradient-color-preview" title="Нажмите для выбора цвета"></div>' +
+        '<span class="gradient-color-label"></span>' +
+        '<button type="button" class="gradient-color-remove" title="Удалить цвет" aria-label="Удалить цвет">' +
+        '<span class="material-symbols-rounded">close</span></button>';
+      grid.appendChild(item);
+      items.push(item);
+    }
+    items.forEach((item, i) => {
+      item.classList.remove("is-leaving");
+      item.dataset.index = String(i);
+      item.querySelector(".gradient-color-preview").style.background = colors[i];
+      item.querySelector(".gradient-color-label").textContent = "Цвет " + (i + 1);
+      const rm = item.querySelector(".gradient-color-remove");
+      rm.disabled = !canRemove;
+      item.classList.toggle("is-locked", !canRemove);
+    });
+    if (enterIndex >= 0 && items[enterIndex]) {
+      const el = items[enterIndex];
+      el.classList.remove("is-entering");
+      void el.offsetWidth;
+      el.classList.add("is-entering");
+      el.addEventListener(
+        "animationend",
+        () => el.classList.remove("is-entering"),
+        { once: true },
+      );
+    }
+    this.updateGradientPreview();
+  }
+
+  addGradientColor() {
+    const colors = this.getGradientColors();
+    colors.push(this.nextGradientColor(colors));
+    this.saveGradientColors(colors);
+    this.renderGradientColors(colors.length - 1);
+    if (localStorage.getItem("backgroundType") === "custom-gradient") {
+      this.applyBackgroundSettings();
+    }
+  }
+
+  removeGradientColor(index) {
+    const colors = this.getGradientColors();
+    if (colors.length <= 2 || index < 0 || index >= colors.length) return;
+    const grid = this.gradientColorsGrid;
+    const el = grid && grid.querySelector(`.gradient-color-item[data-index="${index}"]`);
+    const commit = () => {
+      colors.splice(index, 1);
+      this.saveGradientColors(colors);
+      this.renderGradientColors();
+      if (localStorage.getItem("backgroundType") === "custom-gradient") {
+        this.applyBackgroundSettings();
+      }
+    };
+    const off = document.body.classList.contains("no-animations");
+    if (!el || off) return commit();
+    // Обратная анимация появления: элемент «схлопывается», и только потом удаляется
+    if (el.classList.contains("is-leaving")) return;
+    el.classList.add("is-leaving");
+    let done = false;
+    const finish = () => {
+      if (done) return;
+      done = true;
+      commit();
+    };
+    el.addEventListener("animationend", finish, { once: true });
+    setTimeout(finish, 420);
+  }
+
   changeGradientColor(index, color) {
     if (!this.validateHexColor(color)) {
       return;
     }
 
-    // Сохраняем цвет в массив
-    const gradientColors = JSON.parse(
-      localStorage.getItem("customGradientColors") ||
-        '["#6750a4", "#b583da", "#e67bd6", "#ff8da1"]',
-    );
+    const gradientColors = this.getGradientColors();
     gradientColors[index] = color;
-    localStorage.setItem(
-      "customGradientColors",
-      JSON.stringify(gradientColors),
-    );
+    this.saveGradientColors(gradientColors);
 
-    // Обновляем превью цвета
-    if (this.gradientColorPreviews[index]) {
-      this.gradientColorPreviews[index].style.background = color;
-    }
-    if (this.gradientColorInputs[index]) {
-      this.gradientColorInputs[index].value = color;
-    }
-
-    // Обновляем общий превью градиента
-    this.updateGradientPreview();
+    this.renderGradientColors();
 
     // Применяем настройки если выбран кастомный градиент
     if (localStorage.getItem("backgroundType") === "custom-gradient") {
@@ -709,13 +841,8 @@ class SettingsManager {
 
   updateGradientPreview() {
     if (!this.gradientPreview) return;
-
-    const gradientColors = JSON.parse(
-      localStorage.getItem("customGradientColors") ||
-        '["#6750a4", "#b583da", "#e67bd6", "#ff8da1"]',
-    );
-    const gradientString = `linear-gradient(45deg, ${gradientColors.join(", ")})`;
-    this.gradientPreview.style.background = gradientString;
+    const gradientColors = this.getGradientColors();
+    this.gradientPreview.style.background = `linear-gradient(90deg, ${gradientColors.join(", ")})`;
   }
 
   validateHexColor(color) {
@@ -739,42 +866,111 @@ class SettingsManager {
     }
   }
 
+  // ---------- Фон: слои с плавной сменой ----------
+  // Каждое изменение фона — это новый слой поверх старого, который «раскрывается»
+  // кругом от места нажатия. Градиент не сбрасывается в начало (раньше
+  // `background:` в body.style перезапускал его — отсюда рывки).
+  getBgStack() {
+    let stack = document.getElementById("bgStack");
+    if (!stack) {
+      stack = document.createElement("div");
+      stack.id = "bgStack";
+      stack.setAttribute("aria-hidden", "true");
+      document.body.prepend(stack);
+    }
+    return stack;
+  }
+
+  setBackgroundLayer(spec) {
+    const stack = this.getBgStack();
+    const sig = JSON.stringify(spec);
+    const layers = Array.from(stack.querySelectorAll(".bg-layer"));
+    const top = layers[layers.length - 1];
+    if (top && top.dataset.sig === sig) return;
+
+    const layer = document.createElement("div");
+    layer.className = "bg-layer" + (spec.animated ? " is-animated" : "");
+    layer.dataset.sig = sig;
+    layer.style.background = spec.background;
+    layer.style.backgroundSize = spec.size;
+    if (spec.animated) {
+      // единая фаза для всех слоёв — градиент не «перескакивает» при смене
+      const phase = (document.timeline.currentTime || performance.now()) % 20000;
+      layer.style.setProperty("--bg-phase", `-${Math.round(phase)}ms`);
+    }
+
+    const animate =
+      top &&
+      !document.body.classList.contains("no-animations") &&
+      !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    if (!animate) {
+      stack.replaceChildren(layer);
+      return;
+    }
+
+    // Прошлую незаконченную смену не обрываем: слои, которые ещё «раскрываются»,
+    // остаются как подложка (иначе в нераскрытых местах проглядывал бы запасной фон
+    // страницы — градиент «не показывался»). Убираем только лишние уже готовые слои,
+    // оставив самый верхний из них как основу.
+    const ready = layers.filter((l) => !l.classList.contains("bg-enter"));
+    ready.slice(0, -1).forEach((l) => l.remove());
+    const p = this._lastPointer || {
+      x: window.innerWidth / 2,
+      y: window.innerHeight / 2,
+    };
+    layer.style.setProperty("--bg-x", Math.round(p.x) + "px");
+    layer.style.setProperty("--bg-y", Math.round(p.y) + "px");
+    layer.classList.add("bg-enter");
+    stack.appendChild(layer);
+
+    let done = false;
+    const finish = () => {
+      if (done) return;
+      done = true;
+      // Слой уже убрали (быстрая смена подряд) — ничего не трогаем. Раньше здесь
+      // сравнивалось положение отсоединённого слоя, и стопка могла очиститься целиком.
+      if (!layer.isConnected) return;
+      layer.classList.remove("bg-enter");
+      const all = Array.from(stack.querySelectorAll(".bg-layer"));
+      all.slice(0, all.indexOf(layer)).forEach((l) => l.remove());
+    };
+    layer.addEventListener(
+      "animationend",
+      (e) => {
+        if (e.animationName === "bgReveal") finish();
+      },
+      { once: false },
+    );
+    setTimeout(finish, 1300);
+  }
+
   applySolidBackground() {
     const solidColor =
       localStorage.getItem("solidBackgroundColor") || "#6750a4";
-    document.body.style.background = solidColor;
-    document.body.style.backgroundSize = "auto";
-    document.body.style.animation = "none";
+    this.setBackgroundLayer({
+      background: solidColor,
+      size: "auto",
+      animated: false,
+    });
   }
 
   applyCustomGradientBackground() {
-    const gradientColors = JSON.parse(
-      localStorage.getItem("customGradientColors") ||
-        '["#6750a4", "#b583da", "#e67bd6", "#ff8da1"]',
-    );
-    const gradientString = `linear-gradient(-45deg, ${gradientColors.join(", ")})`;
-
-    document.body.style.background = gradientString;
-    document.body.style.backgroundSize = "400% 400%";
-    document.body.style.animation = "gradient 20s ease infinite";
+    const gradientString = `linear-gradient(-45deg, ${this.getGradientColors().join(", ")})`;
+    this.setBackgroundLayer({
+      background: gradientString,
+      size: "400% 400%",
+      animated: true,
+    });
   }
 
   applyDefaultGradientBackground() {
-    document.body.style.background = `
-            linear-gradient(
-                -45deg,
-                #6750a4,
-                #b583da,
-                #e67bd6,
-                #ff8da1,
-                #006a6b,
-                #00b3a6,
-                #8e24aa,
-                #ba68c8
-            )
-        `;
-    document.body.style.backgroundSize = "400% 400%";
-    document.body.style.animation = "gradient 20s ease infinite";
+    this.setBackgroundLayer({
+      background:
+        "linear-gradient(-45deg, #6750a4, #b583da, #e67bd6, #ff8da1, #4a3a8f, #9a67ea, #8e24aa, #ba68c8)",
+      size: "400% 400%",
+      animated: true,
+    });
   }
 
   loadBackgroundSettings() {
@@ -782,10 +978,6 @@ class SettingsManager {
     const backgroundType = localStorage.getItem("backgroundType") || "gradient";
     const solidColor =
       localStorage.getItem("solidBackgroundColor") || "#6750a4";
-    const gradientColors = JSON.parse(
-      localStorage.getItem("customGradientColors") ||
-        '["#6750a4", "#b583da", "#e67bd6", "#ff8da1"]',
-    );
 
     // Устанавливаем значения в UI
     if (this.backgroundTypeSelect) {
@@ -800,18 +992,8 @@ class SettingsManager {
       this.colorPreview.style.background = solidColor;
     }
 
-    // Устанавливаем цвета градиента
-    gradientColors.forEach((color, index) => {
-      if (this.gradientColorInputs[index]) {
-        this.gradientColorInputs[index].value = color;
-      }
-      if (this.gradientColorPreviews[index]) {
-        this.gradientColorPreviews[index].style.background = color;
-      }
-    });
-
-    // Обновляем превью градиента
-    this.updateGradientPreview();
+    // Цвета градиента и его превью
+    this.renderGradientColors();
 
     // Показываем/скрываем соответствующие элементы
     this.toggleBackgroundSettingsVisibility(backgroundType);
@@ -869,39 +1051,76 @@ class SettingsManager {
     });
   }
 
-  switchTab(tab) {
-    this.tabButtons.forEach((btn) => {
-      btn.classList.remove("active");
-    });
-
+  switchTab(tab, immediate = false) {
+    const prevTab = this.currentTab;
+    this.tabButtons.forEach((btn) => btn.classList.remove("active"));
     const activeButton = Array.from(this.tabButtons).find(
       (btn) => btn.dataset.tab === tab,
     );
-    if (activeButton) {
-      activeButton.classList.add("active");
-    }
-
+    if (activeButton) activeButton.classList.add("active");
     this.currentTab = tab;
 
-    this.settingCategories.forEach((category) => {
-      const categoryType = category.dataset.category;
+    const token = (this._tabToken = (this._tabToken || 0) + 1);
+    const order = Array.from(this.tabButtons).map((b) => b.dataset.tab);
+    const dir = order.indexOf(tab) >= order.indexOf(prevTab) ? 1 : -1;
+    const mobile = window.matchMedia("(max-width: 768px)").matches;
+    const dist = mobile ? 56 : 24;
+    const animate =
+      !immediate &&
+      prevTab !== undefined &&
+      prevTab !== tab &&
+      this.settingsPopup.classList.contains("active") &&
+      !document.body.classList.contains("no-animations");
 
-      if (tab === "all" || categoryType === tab) {
-        category.classList.remove("hidden");
-        category.classList.add("tab-switch-animation");
+    const shows = (c) => tab === "all" || c.dataset.category === tab;
 
-        setTimeout(() => {
-          category.classList.remove("tab-switch-animation");
-        }, 300);
-      } else {
-        category.classList.add("hidden");
-      }
-    });
+    const reveal = () => {
+      if (token !== this._tabToken) return;
+      this.settingCategories.forEach((category) => {
+        if (shows(category)) {
+          const wasHidden = category.classList.contains("hidden");
+          category.classList.remove("hidden");
+          // Новая страница въезжает со стороны направления (translate — не конфликтует с m3eRise)
+          if (animate && wasHidden && category.animate) {
+            category.animate(
+              [
+                { translate: `${dir * dist}px 0` },
+                { translate: "0 0" },
+              ],
+              { duration: 420, easing: "cubic-bezier(0.2, 0, 0, 1)" },
+            );
+          }
+        } else {
+          category.classList.add("hidden");
+        }
+      });
+      if (tab === "mods") this.updateAutoLoadList();
+    };
 
-    // Обновляем список автозагрузки при переключении на вкладку модов
-    if (tab === "mods") {
-      this.updateAutoLoadList();
+    const out = Array.from(this.settingCategories).filter(
+      (c) => !shows(c) && !c.classList.contains("hidden"),
+    );
+    if (!animate || out.length === 0 || !out[0].animate) {
+      reveal();
+      return;
     }
+    // Обратная анимация: уходящая страница уезжает в противоположную сторону
+    let pending = out.length;
+    out.forEach((c) => {
+      const a = c.animate(
+        [
+          { translate: "0 0", opacity: 1 },
+          { translate: `${-dir * dist}px 0`, opacity: 0 },
+        ],
+        { duration: 170, easing: "cubic-bezier(0.3, 0, 1, 1)", fill: "forwards" },
+      );
+      const done = () => {
+        a.cancel();
+        if (--pending === 0) reveal();
+      };
+      a.onfinish = done;
+      a.oncancel = () => {};
+    });
   }
 
   openPopup() {
@@ -910,7 +1129,7 @@ class SettingsManager {
     this.settingsPopup.classList.add("active");
     document.body.style.overflow = "hidden";
 
-    this.switchTab("all");
+    this.switchTab("all", true);
   }
 
   closePopupWindow() {
@@ -978,11 +1197,8 @@ class SettingsManager {
       document.body.classList.add("no-animations");
     }
 
-    if (gradientEnabled) {
-      document.body.style.animation = "gradient 20s ease infinite";
-    } else {
-      document.body.style.animation = "none";
-    }
+    // Градиент ставится на паузу, а не сбрасывается — без рывка при переключении
+    this.getBgStack().classList.toggle("is-paused", !gradientEnabled);
   }
 
   resetAllData() {

@@ -76,8 +76,18 @@
       void overlay.querySelector(".mod-editor-window").offsetWidth;
       overlay.classList.add("active");
       document.body.style.overflow = "hidden";
-      text.focus({ preventScroll: true });
-      text.setSelectionRange(0, 0);
+      // На мобильных клавиатура не должна выскакивать посреди выезда окна снизу
+      const focusText = () => {
+        text.focus({ preventScroll: true });
+        text.setSelectionRange(0, 0);
+      };
+      if (window.matchMedia("(max-width: 768px)").matches) {
+        setTimeout(() => {
+          if (overlay.classList.contains("active")) focusText();
+        }, 420);
+      } else {
+        focusText();
+      }
       text.scrollTop = 0;
     }
 

@@ -2,7 +2,7 @@
 <html lang="ru">
     <head>
         <meta charset="UTF-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
         <title>Pixel Clicker</title>
 
         <!-- Favicon -->
@@ -38,7 +38,6 @@
         <link rel="stylesheet" href="assets/css/casino.css" />
         <link rel="stylesheet" href="assets/css/case.css" />
         <link rel="stylesheet" href="assets/css/inventory.css" />
-        <link rel="stylesheet" href="assets/css/casino-theme.css" />
         <link rel="stylesheet" href="assets/css/m3e.css" />
         <link rel="stylesheet" href="assets/css/motion.css" />
         <link rel="stylesheet" href="assets/css/modeditor.css" />
@@ -46,29 +45,41 @@
         <link rel="stylesheet" href="assets/css/welcome.css" />
         <link rel="stylesheet" href="assets/css/accent-anim.css" />
         <link rel="stylesheet" href="assets/css/daily.css" />
+        <link rel="stylesheet" href="assets/css/mobile.css" />
+        <link rel="stylesheet" href="assets/css/fx.css" />
     </head>
     <body>
         <div class="container">
             <div class="header">
                 <div class="counter" id="counter">0</div>
                 <div class="header-buttons">
+                    <button class="icon-btn" id="clickerBtn" title="Кликер">
+                        <span class="material-symbols-rounded">touch_app</span>
+                        <span class="nav-label">Кликер</span>
+                    </button>
                     <button class="icon-btn" id="storeBtn">
                         <span class="material-symbols-rounded">storefront</span>
+                        <span class="nav-label">Магазин</span>
                     </button>
                     <button class="icon-btn" id="inventoryBtn" title="Инвентарь">
                         <span class="material-symbols-rounded">inventory_2</span>
+                        <span class="nav-label">Инвентарь</span>
                     </button>
                     <button class="icon-btn" id="skinsBtn">
                         <span class="material-symbols-rounded">checkroom</span>
+                        <span class="nav-label">Скины</span>
                     </button>
                     <button class="icon-btn" id="casinoBtn" title="Казино">
                         <span class="material-symbols-rounded">casino</span>
+                        <span class="nav-label">Казино</span>
                     </button>
                     <button class="icon-btn" id="dailyBtn" title="Ежедневный дроп">
                         <span class="material-symbols-rounded">redeem</span>
+                        <span class="nav-label">Дроп</span>
                     </button>
                     <button class="icon-btn" id="settingsBtn">
                         <span class="material-symbols-rounded">settings</span>
+                        <span class="nav-label">Настройки</span>
                     </button>
                 </div>
             </div>
@@ -86,7 +97,7 @@
         <div class="store-popup" id="storePopup">
             <div class="popup-content">
                 <div class="popup-header">
-                    <h2>Магазин скинов</h2>
+                    <h2><span class="material-symbols-rounded">storefront</span> Магазин скинов</h2>
                     <button class="close-btn" id="closeStorePopup"><span class="material-symbols-rounded">close</span></button>
                 </div>
                 <div class="store-content">
@@ -102,7 +113,7 @@
         <div class="skins-popup" id="skinsPopup">
             <div class="popup-content">
                 <div class="popup-header">
-                    <h2>Мои скины</h2>
+                    <h2><span class="material-symbols-rounded">checkroom</span> Мои скины</h2>
                     <button class="close-btn" id="closeSkinsPopup"><span class="material-symbols-rounded">close</span></button>
                 </div>
                 <div class="skins-content">
@@ -186,7 +197,7 @@
         <div class="inventory-popup" id="inventoryPopup">
             <div class="popup-content">
                 <div class="popup-header">
-                    <h2>Инвентарь</h2>
+                    <h2><span class="material-symbols-rounded">inventory_2</span> Инвентарь</h2>
                     <button class="close-btn" id="closeInventoryPopup"><span class="material-symbols-rounded">close</span></button>
                 </div>
                 <div class="inventory-content">
@@ -203,10 +214,12 @@
 
         <!-- Открытие кейса (на весь экран) -->
         <div class="case-popup" id="casePopup">
+            <div class="case-title" id="caseTitle"></div>
             <div class="case-roulette" id="caseRoulette">
                 <div class="case-pointer"></div>
                 <div class="case-track" id="caseTrack"></div>
             </div>
+            <div class="case-result" id="caseResult"></div>
             <div class="case-hint" id="caseHint"></div>
         </div>
 
@@ -214,7 +227,7 @@
         <div class="settings-popup" id="settingsPopup">
             <div class="popup-content">
                 <div class="popup-header">
-                    <h2>Настройки</h2>
+                    <h2><span class="material-symbols-rounded">settings</span> Настройки</h2>
                     <button class="close-btn" id="closePopup"><span class="material-symbols-rounded">close</span></button>
                 </div>
 
@@ -313,101 +326,33 @@
                                     </div>
                                 </div>
 
-                                <!-- Кастомные цвета градиента -->
+                                <!-- Кастомные цвета градиента: список строится из settings.js -->
                                 <div
                                     class="custom-gradient-container"
                                     style="display: none"
                                 >
                                     <label class="color-picker-label"
-                                        >Выберите цвета градиента (нажмите на
-                                        цвет):</label
+                                        >Цвета градиента (нажмите на цвет,
+                                        чтобы изменить):</label
                                     >
-                                    <div class="gradient-colors-grid">
-                                        <div class="gradient-color-item">
-                                            <div
-                                                class="gradient-color-preview"
-                                                id="gradientColorPreview1"
-                                                title="Нажмите для выбора цвета"
-                                                style="background: #6750a4"
-                                            >
-                                                <input
-                                                    type="text"
-                                                    class="gradient-color-input"
-                                                    id="gradientColor1"
-                                                    value="#6750a4"
-                                                />
-                                            </div>
-                                            <span class="gradient-color-label"
-                                                >Цвет 1</span
-                                            >
-                                        </div>
-                                        <div class="gradient-color-item">
-                                            <div
-                                                class="gradient-color-preview"
-                                                id="gradientColorPreview2"
-                                                title="Нажмите для выбора цвета"
-                                                style="background: #b583da"
-                                            >
-                                                <input
-                                                    type="text"
-                                                    class="gradient-color-input"
-                                                    id="gradientColor2"
-                                                    value="#b583da"
-                                                />
-                                            </div>
-                                            <span class="gradient-color-label"
-                                                >Цвет 2</span
-                                            >
-                                        </div>
-                                        <div class="gradient-color-item">
-                                            <div
-                                                class="gradient-color-preview"
-                                                id="gradientColorPreview3"
-                                                title="Нажмите для выбора цвета"
-                                                style="background: #e67bd6"
-                                            >
-                                                <input
-                                                    type="text"
-                                                    class="gradient-color-input"
-                                                    id="gradientColor3"
-                                                    value="#e67bd6"
-                                                />
-                                            </div>
-                                            <span class="gradient-color-label"
-                                                >Цвет 3</span
-                                            >
-                                        </div>
-                                        <div class="gradient-color-item">
-                                            <div
-                                                class="gradient-color-preview"
-                                                id="gradientColorPreview4"
-                                                title="Нажмите для выбора цвета"
-                                                style="background: #ff8da1"
-                                            >
-                                                <input
-                                                    type="text"
-                                                    class="gradient-color-input"
-                                                    id="gradientColor4"
-                                                    value="#ff8da1"
-                                                />
-                                            </div>
-                                            <span class="gradient-color-label"
-                                                >Цвет 4</span
-                                            >
-                                        </div>
-                                    </div>
+                                    <div
+                                        class="gradient-colors-grid"
+                                        id="gradientColorsGrid"
+                                    ></div>
+                                    <button
+                                        type="button"
+                                        class="gradient-add-btn"
+                                        id="gradientAddColor"
+                                    >
+                                        <span class="material-symbols-rounded">add</span>
+                                        Добавить цвет
+                                    </button>
                                     <div
                                         class="gradient-preview"
                                         id="gradientPreview"
                                     ></div>
-                                    <div
-                                        style="
-                                            font-size: 0.8rem;
-                                            color: var(--text-secondary);
-                                            margin-top: 0.5rem;
-                                        "
-                                    >
-                                        Превью вашего градиента
+                                    <div class="gradient-hint">
+                                        Превью вашего градиента · минимум 2 цвета
                                     </div>
                                 </div>
                             </div>
@@ -650,6 +595,10 @@
                                 <span class="material-symbols-rounded">smartphone</span> Мододельня
                             </a>
                         </div>
+                        <div class="app-credit">
+                            <div class="app-credit-name">Pixel Clicker 5.1</div>
+                            <div class="app-credit-by">by AFGAN Store</div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -700,5 +649,7 @@
         <script src="assets/js/dropdown.js"></script>
         <script src="assets/js/accent-anim.js"></script>
         <script src="assets/js/welcome.js"></script>
+        <script src="assets/js/mobile-nav.js"></script>
+        <script src="assets/js/fx.js"></script>
     </body>
 </html>

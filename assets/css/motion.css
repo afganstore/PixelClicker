@@ -100,33 +100,6 @@ body {
     }
 }
 
-@keyframes m3xPointer {
-    0%,
-    100% {
-        translate: 0 0;
-        opacity: 1;
-    }
-    50% {
-        translate: 0 4px;
-        opacity: 0.8;
-    }
-}
-
-@keyframes m3xWinner {
-    0% {
-        scale: 1;
-    }
-    35% {
-        scale: 1.16;
-    }
-    60% {
-        scale: 0.97;
-    }
-    100% {
-        scale: 1.06;
-    }
-}
-
 @keyframes m3xRing {
     from {
         opacity: 0.55;
@@ -405,19 +378,6 @@ body #casinoBalance.m3x-tick {
     animation: m3xTick 420ms var(--m3e-spring-bouncy);
 }
 
-/* ---------- 7. Кейс ---------- */
-body .case-pointer {
-    animation: m3xPointer 1.1s ease-in-out infinite;
-}
-
-body .case-card.winner {
-    animation: m3xWinner 900ms var(--m3e-spring-bouncy) forwards;
-}
-
-body .case-hint.show {
-    animation: m3xRise 480ms var(--m3e-spring-spatial) backwards;
-}
-
 /* ---------- 8. Плавная смена темы (класс ставит motion.js на ~0.5 с) ---------- */
 html.m3x-theme-switch *:not(.switch):not(.switch *),
 html.m3x-theme-switch *:not(.switch):not(.switch *)::before,
@@ -482,7 +442,6 @@ body .color-picker-overlay:has(.color-picker-close) {
     body .inventory-content,
     body .casino-body,
     body .casino-spin-btn,
-    body .case-pointer,
     body .header-buttons .icon-btn .material-symbols-rounded {
         animation: none !important;
     }
